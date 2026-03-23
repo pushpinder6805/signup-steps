@@ -130,41 +130,14 @@ export default apiInitializer("0.8", (api) => {
 
     initialized = true;
 
-    function resolveSettingText(value, fallback) {
-      if (value === null || value === undefined) return fallback;
-      const str = Array.isArray(value) ? value.join("\n") : String(value);
-      return str.trim() || fallback;
-    }
-
-    function getThemeSetting(key) {
-      try {
-        const seen = window.requirejs && window.requirejs._eak_seen;
-        if (seen) {
-          const themeModule = Object.keys(seen).find(
-            (m) => /discourse\/theme-\d+\/settings/.test(m)
-          );
-          if (themeModule) {
-            const mod = require(themeModule);
-            const s = mod && (mod.default || mod);
-            if (s && s[key] !== undefined) return s[key];
-          }
-        }
-      } catch (_) {}
-      return undefined;
-    }
-
     function getGuidelinesText() {
-      return resolveSettingText(
-        getThemeSetting("community_guidelines_text"),
-        "Please read our community guidelines carefully before proceeding."
-      );
+      const val = settings && settings.community_guidelines_text;
+      return (val && String(val).trim()) || "Please read our community guidelines carefully before proceeding.";
     }
 
     function getPrivacyText() {
-      return resolveSettingText(
-        getThemeSetting("privacy_policy_text"),
-        "Please read our privacy policy carefully before proceeding."
-      );
+      const val = settings && settings.privacy_policy_text;
+      return (val && String(val).trim()) || "Please read our privacy policy carefully before proceeding.";
     }
 
     const page2Groups = groups.slice(0, 12);
