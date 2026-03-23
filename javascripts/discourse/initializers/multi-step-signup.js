@@ -5,23 +5,72 @@ export default apiInitializer("0.8", (api) => {
 
   function cleanup() {
     initialized = false;
-    document.querySelectorAll(".multi-step-nav, .multi-step-style, .privacy-policy-wrapper").forEach((el) => el.remove());
-    document.querySelectorAll(".user-fields .input-group, .create-account-email, .create-account__username, .create-account__password").forEach((el) => {
-      el.style.display = "";
-    });
+    document
+      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-legal-block")
+      .forEach((el) => el.remove());
+    document
+      .querySelectorAll(
+        ".user-fields .input-group, .create-account-email, .create-account__username, .create-account__password"
+      )
+      .forEach((el) => {
+        el.style.display = "";
+      });
     const submitBtn = document.querySelector(".sign-up-button");
     if (submitBtn) submitBtn.style.display = "";
+  }
+
+  function buildLegalBlock(title, bodyText, checkboxLabel) {
+    const wrap = document.createElement("div");
+    wrap.className = "mss-legal-block";
+    wrap.style.cssText = "margin-bottom: 16px; display: none;";
+
+    const heading = document.createElement("div");
+    heading.className = "mss-legal-heading";
+    heading.textContent = title;
+
+    const box = document.createElement("div");
+    box.className = "mss-legal-box";
+    box.textContent = bodyText;
+
+    const checkRow = document.createElement("label");
+    checkRow.className = "mss-legal-check-row";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "mss-legal-checkbox";
+
+    const checkLabel = document.createElement("span");
+    checkLabel.className = "mss-legal-check-label";
+    checkLabel.innerHTML = checkboxLabel;
+
+    checkRow.appendChild(checkbox);
+    checkRow.appendChild(checkLabel);
+
+    wrap.appendChild(heading);
+    wrap.appendChild(box);
+    wrap.appendChild(checkRow);
+
+    return { wrap, checkbox };
   }
 
   function initMultiStep() {
     if (initialized) return;
 
-    const groups = Array.from(document.querySelectorAll(".user-fields .input-group"));
+    const groups = Array.from(
+      document.querySelectorAll(".user-fields .input-group")
+    );
     if (!groups.length) return;
 
     initialized = true;
 
-    const page1Groups = [];
+    const settings = api.container.lookup("service:site-settings");
+    const guidelinesText =
+      (settings && settings.community_guidelines_text) ||
+      "Please read our community guidelines carefully before proceeding.";
+    const privacyText =
+      (settings && settings.privacy_policy_text) ||
+      "Please read our privacy policy carefully before proceeding.";
+
     const page2Groups = groups.slice(0, 12);
     const page3Groups = groups.slice(12);
 
@@ -40,59 +89,81 @@ export default apiInitializer("0.8", (api) => {
       .multi-step-dot.active { background: var(--tertiary, #0088cc) !important; }
       .multi-step-dot.done   { background: var(--success, #5cb85c) !important; }
       .multi-step-nav .btn   { display: inline-flex !important; align-items: center; gap: 6px; }
-      .privacy-policy-box {
+      .mss-legal-block { margin-bottom: 20px; }
+      .mss-legal-heading {
+        font-weight: 700;
+        color: var(--tertiary, #0d47a1);
+        margin-bottom: 8px;
+        font-size: 0.95em;
+        letter-spacing: 0.01em;
+      }
+      .mss-legal-box {
         border: 1px solid var(--primary-low, #d0d0d0);
         border-radius: 6px;
-        padding: 16px;
-        max-height: 220px;
+        padding: 14px 16px;
+        max-height: 180px;
         overflow-y: auto;
-        font-size: 0.9em;
-        line-height: 1.6;
+        font-size: 0.88em;
+        line-height: 1.65;
         color: var(--primary, #222);
         background: var(--secondary, #fff);
-        margin-bottom: 16px;
+        margin-bottom: 12px;
+        white-space: pre-wrap;
       }
-      .privacy-policy-box::-webkit-scrollbar { width: 6px; }
-      .privacy-policy-box::-webkit-scrollbar-thumb { background: var(--primary-medium, #aaa); border-radius: 3px; }
-      .privacy-policy-label {
-        font-weight: bold;
-        color: var(--tertiary, #0088cc);
-        margin-bottom: 8px;
-        font-size: 1em;
+      .mss-legal-box::-webkit-scrollbar { width: 5px; }
+      .mss-legal-box::-webkit-scrollbar-thumb { background: var(--primary-medium, #bbb); border-radius: 3px; }
+      .mss-legal-check-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+        margin-bottom: 4px;
       }
+      .mss-legal-checkbox {
+        margin-top: 2px;
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        cursor: pointer;
+        accent-color: var(--tertiary, #0d47a1);
+      }
+      .mss-legal-check-label {
+        font-size: 0.9em;
+        font-weight: 600;
+        color: var(--primary, #222);
+        line-height: 1.4;
+      }
+      .mss-legal-check-label span.required { color: var(--danger, #c00); }
     `;
     document.head.appendChild(styleEl);
 
-    const privacyWrapper = document.createElement("div");
-    privacyWrapper.className = "privacy-policy-wrapper";
-    privacyWrapper.style.display = "none";
+    const { wrap: guidelinesBlock, checkbox: guidelinesCheckbox } =
+      buildLegalBlock(
+        "Community Guidelines",
+        guidelinesText,
+        `I agree to the Community Guidelines<span class="required">*</span>`
+      );
 
-    const privacyLabel = document.createElement("div");
-    privacyLabel.className = "privacy-policy-label";
-    privacyLabel.textContent = "Privacy Policy";
+    const { wrap: privacyBlock, checkbox: privacyCheckbox } = buildLegalBlock(
+      "Privacy Policy",
+      privacyText,
+      `I agree to the Privacy Policy<span class="required">*</span>`
+    );
 
-    const privacyBox = document.createElement("div");
-    privacyBox.className = "privacy-policy-box";
-    privacyBox.innerHTML = `
-      <p>By creating an account and using our platform, you agree to the collection and use of your information in accordance with this Privacy Policy.</p>
-      <p>We collect information you provide directly to us, such as your name, email address, organization details, and any other information you choose to provide during registration. This information is used to create and manage your account, communicate with you about the platform, and improve our services.</p>
-      <p>We may also collect information about how you use the platform, including log data, device information, and usage patterns. This helps us understand how our services are used and enables us to make improvements.</p>
-      <p>We do not sell, trade, or otherwise transfer your personally identifiable information to outside parties without your consent, except as required by law or to trusted third parties who assist us in operating the platform, conducting our business, or serving you, so long as those parties agree to keep this information confidential.</p>
-      <p>We implement a variety of security measures to maintain the safety of your personal information. Your personal information is stored in secure networks and is only accessible by a limited number of persons who have special access rights and are required to keep the information confidential.</p>
-      <p>You have the right to access, correct, or delete your personal data at any time. If you wish to exercise these rights, please contact us through the platform's support channels.</p>
-      <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. You are advised to review this Privacy Policy periodically for any changes.</p>
-      <p>By continuing to use the platform after changes become effective, you agree to be bound by the revised Privacy Policy. If you do not agree to the new terms, please stop using the platform.</p>
-    `;
-
-    privacyWrapper.appendChild(privacyLabel);
-    privacyWrapper.appendChild(privacyBox);
-
-    if (page3Groups.length > 0) {
-      page3Groups[0].before(privacyWrapper);
-    } else {
-      const userFieldsEl2 = document.querySelector(".user-fields");
-      if (userFieldsEl2) userFieldsEl2.appendChild(privacyWrapper);
+    const userFieldsEl = document.querySelector(".user-fields");
+    if (userFieldsEl) {
+      if (page3Groups.length > 0) {
+        page3Groups[0].before(guidelinesBlock);
+        page3Groups[0].before(privacyBlock);
+      } else {
+        userFieldsEl.appendChild(guidelinesBlock);
+        userFieldsEl.appendChild(privacyBlock);
+      }
     }
+
+    page3Groups.forEach((g) => {
+      g.style.display = "none";
+    });
 
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
@@ -145,7 +216,6 @@ export default apiInitializer("0.8", (api) => {
     nav.appendChild(stepLabel);
     nav.appendChild(btnGroup);
 
-    const userFieldsEl = document.querySelector(".user-fields");
     if (userFieldsEl) {
       userFieldsEl.after(nav);
     }
@@ -153,19 +223,29 @@ export default apiInitializer("0.8", (api) => {
     function showStep(step) {
       currentStep = step;
 
-      coreFields.forEach((f) => { f.style.display = step === 1 ? "" : "none"; });
+      coreFields.forEach((f) => {
+        f.style.display = step === 1 ? "" : "none";
+      });
 
-      groups.forEach((g) => { g.style.display = "none"; });
-      if (step === 2) page2Groups.forEach((g) => { g.style.display = ""; });
-      if (step === 3) page3Groups.forEach((g) => { g.style.display = ""; });
+      groups.forEach((g) => {
+        g.style.display = "none";
+      });
+      if (step === 2) {
+        page2Groups.forEach((g) => {
+          g.style.display = "";
+        });
+      }
 
-      privacyWrapper.style.display = step === 3 ? "" : "none";
+      guidelinesBlock.style.display = step === 3 ? "" : "none";
+      privacyBlock.style.display = step === 3 ? "" : "none";
 
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
       nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
 
       const submitBtn = document.querySelector(".sign-up-button");
-      if (submitBtn) submitBtn.style.display = step === totalSteps ? "" : "none";
+      if (submitBtn) {
+        submitBtn.style.display = step === totalSteps ? "" : "none";
+      }
 
       dots.forEach((dot, i) => {
         dot.classList.toggle("active", i + 1 === step);
@@ -186,6 +266,42 @@ export default apiInitializer("0.8", (api) => {
       e.stopPropagation();
       if (currentStep > 1) showStep(currentStep - 1);
     });
+
+    const submitBtn = document.querySelector(".sign-up-button");
+    if (submitBtn) {
+      submitBtn.addEventListener(
+        "click",
+        (e) => {
+          if (!guidelinesCheckbox.checked || !privacyCheckbox.checked) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (!guidelinesCheckbox.checked) {
+              guidelinesCheckbox.closest(".mss-legal-check-row").style.outline =
+                "2px solid var(--danger, #c00)";
+              guidelinesCheckbox.closest(".mss-legal-check-row").style.borderRadius = "3px";
+            }
+            if (!privacyCheckbox.checked) {
+              privacyCheckbox.closest(".mss-legal-check-row").style.outline =
+                "2px solid var(--danger, #c00)";
+              privacyCheckbox.closest(".mss-legal-check-row").style.borderRadius = "3px";
+            }
+          }
+        },
+        true
+      );
+
+      guidelinesCheckbox.addEventListener("change", () => {
+        if (guidelinesCheckbox.checked) {
+          guidelinesCheckbox.closest(".mss-legal-check-row").style.outline = "";
+        }
+      });
+
+      privacyCheckbox.addEventListener("change", () => {
+        if (privacyCheckbox.checked) {
+          privacyCheckbox.closest(".mss-legal-check-row").style.outline = "";
+        }
+      });
+    }
 
     showStep(1);
   }
