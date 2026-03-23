@@ -130,13 +130,21 @@ export default apiInitializer("0.8", (api) => {
 
     initialized = true;
 
-    const settings = api.container.lookup("service:site-settings");
-    const guidelinesText =
-      (settings && settings.community_guidelines_text) ||
-      "Please read our community guidelines carefully before proceeding.";
-    const privacyText =
-      (settings && settings.privacy_policy_text) ||
-      "Please read our privacy policy carefully before proceeding.";
+    const siteSettings = api.container.lookup("service:site-settings");
+
+    function getGuidelinesText() {
+      return (
+        (siteSettings && siteSettings.community_guidelines_text) ||
+        "Please read our community guidelines carefully before proceeding."
+      );
+    }
+
+    function getPrivacyText() {
+      return (
+        (siteSettings && siteSettings.privacy_policy_text) ||
+        "Please read our privacy policy carefully before proceeding."
+      );
+    }
 
     const page2Groups = groups.slice(0, 12);
     const page3Groups = groups.slice(12);
@@ -230,8 +238,8 @@ export default apiInitializer("0.8", (api) => {
     `;
     document.head.appendChild(styleEl);
 
-    const guidelinesTextBox = buildTextBox(guidelinesText);
-    const privacyTextBox = buildTextBox(privacyText);
+    const guidelinesTextBox = buildTextBox(getGuidelinesText());
+    const privacyTextBox = buildTextBox(getPrivacyText());
 
     const userFieldsContainer = document.querySelector(".user-fields");
 
@@ -325,6 +333,8 @@ export default apiInitializer("0.8", (api) => {
         page3Groups.forEach((g) => {
           g.style.display = "";
         });
+        guidelinesTextBox.textContent = getGuidelinesText();
+        privacyTextBox.textContent = getPrivacyText();
         guidelinesTextBox.classList.remove("mss-hidden");
         privacyTextBox.classList.remove("mss-hidden");
       } else {
