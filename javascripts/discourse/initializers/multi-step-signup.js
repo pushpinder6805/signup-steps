@@ -22,8 +22,8 @@ export default apiInitializer("0.8", (api) => {
     initialized = true;
 
     const page1Groups = [];
-    const page2Groups = groups.slice(0, 10);
-    const page3Groups = groups.slice(10);
+    const page2Groups = groups.slice(0, 12);
+    const page3Groups = groups.slice(12);
 
     let currentStep = 1;
     const totalSteps = 3;
