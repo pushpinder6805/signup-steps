@@ -15,6 +15,9 @@ export default apiInitializer("0.8", (api) => {
       .forEach((el) => {
         el.style.display = "";
       });
+    document.querySelectorAll(".signup-progress-bar").forEach((el) => {
+      el.style.display = "";
+    });
     const submitBtn = document.querySelector(".sign-up-button");
     if (submitBtn) submitBtn.style.display = "";
   }
@@ -300,7 +303,21 @@ export default apiInitializer("0.8", (api) => {
     const userFieldsEl = document.querySelector(".user-fields");
     const formEl = document.querySelector(".create-account");
 
-    if (formEl) {
+    document.querySelectorAll(".signup-progress-bar").forEach((el) => {
+      const wrap = el.closest(".mss-progress-bar-wrap");
+      if (wrap) return;
+      el.style.display = "none";
+    });
+
+    const heading = formEl && (
+      formEl.querySelector("h2") ||
+      formEl.querySelector(".create-account-title") ||
+      formEl.querySelector("h1")
+    );
+
+    if (heading) {
+      heading.before(barWrap);
+    } else if (formEl) {
       formEl.prepend(barWrap);
     } else if (userFieldsEl) {
       userFieldsEl.before(barWrap);
