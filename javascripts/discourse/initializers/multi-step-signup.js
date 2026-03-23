@@ -6,7 +6,7 @@ export default apiInitializer("0.8", (api) => {
   function cleanup() {
     initialized = false;
     document
-      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-progress-bar-wrap, .mss-legal-text-box")
+      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-progress-bar-wrap, .mss-legal-text-box, .mss-hidden")
       .forEach((el) => el.remove());
     document
       .querySelectorAll(
@@ -21,7 +21,7 @@ export default apiInitializer("0.8", (api) => {
 
   function buildTextBox(bodyText) {
     const box = document.createElement("div");
-    box.className = "mss-legal-text-box";
+    box.className = "mss-legal-text-box mss-hidden";
     box.textContent = bodyText;
     return box;
   }
@@ -221,6 +221,8 @@ export default apiInitializer("0.8", (api) => {
         background: var(--secondary, #fff);
         margin-bottom: 8px;
         white-space: pre-wrap;
+      }
+      .mss-legal-text-box.mss-hidden {
         display: none;
       }
       .mss-legal-text-box::-webkit-scrollbar { width: 5px; }
@@ -231,6 +233,8 @@ export default apiInitializer("0.8", (api) => {
     const guidelinesTextBox = buildTextBox(guidelinesText);
     const privacyTextBox = buildTextBox(privacyText);
 
+    const userFieldsContainer = document.querySelector(".user-fields");
+
     const guidelinesField = page3Groups.find((g) =>
       g.querySelector("[class*='user-field-community-guidelines']")
     );
@@ -240,9 +244,18 @@ export default apiInitializer("0.8", (api) => {
 
     if (guidelinesField) {
       guidelinesField.before(guidelinesTextBox);
+    } else if (page3Groups.length && page3Groups[0].parentNode) {
+      page3Groups[0].parentNode.insertBefore(guidelinesTextBox, page3Groups[0]);
+    } else if (userFieldsContainer) {
+      userFieldsContainer.appendChild(guidelinesTextBox);
     }
+
     if (privacyField) {
       privacyField.before(privacyTextBox);
+    } else if (guidelinesTextBox.parentNode) {
+      guidelinesTextBox.parentNode.insertBefore(privacyTextBox, guidelinesTextBox.nextSibling);
+    } else if (userFieldsContainer) {
+      userFieldsContainer.appendChild(privacyTextBox);
     }
 
     page3Groups.forEach((g) => {
@@ -312,11 +325,11 @@ export default apiInitializer("0.8", (api) => {
         page3Groups.forEach((g) => {
           g.style.display = "";
         });
-        guidelinesTextBox.style.display = "";
-        privacyTextBox.style.display = "";
+        guidelinesTextBox.classList.remove("mss-hidden");
+        privacyTextBox.classList.remove("mss-hidden");
       } else {
-        guidelinesTextBox.style.display = "none";
-        privacyTextBox.style.display = "none";
+        guidelinesTextBox.classList.add("mss-hidden");
+        privacyTextBox.classList.add("mss-hidden");
       }
 
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
