@@ -21,8 +21,8 @@ export default apiInitializer("0.8", (api) => {
 
     initialized = true;
 
-    const page1Groups = groups.slice(0, 3);
-    const page2Groups = groups.slice(3, 10);
+    const page1Groups = [];
+    const page2Groups = groups.slice(0, 10);
     const page3Groups = groups.slice(10);
 
     let currentStep = 1;
@@ -105,7 +105,6 @@ export default apiInitializer("0.8", (api) => {
       coreFields.forEach((f) => { f.style.display = step === 1 ? "" : "none"; });
 
       groups.forEach((g) => { g.style.display = "none"; });
-      if (step === 1) page1Groups.forEach((g) => { g.style.display = ""; });
       if (step === 2) page2Groups.forEach((g) => { g.style.display = ""; });
       if (step === 3) page3Groups.forEach((g) => { g.style.display = ""; });
 
