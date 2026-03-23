@@ -6,7 +6,7 @@ export default apiInitializer("0.8", (api) => {
   function cleanup() {
     initialized = false;
     document
-      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-progress-bar-wrap")
+      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-progress-bar-wrap, .mss-legal-text-box")
       .forEach((el) => el.remove());
     document
       .querySelectorAll(
@@ -17,6 +17,13 @@ export default apiInitializer("0.8", (api) => {
       });
     const submitBtn = document.querySelector(".sign-up-button");
     if (submitBtn) submitBtn.style.display = "";
+  }
+
+  function buildTextBox(bodyText) {
+    const box = document.createElement("div");
+    box.className = "mss-legal-text-box";
+    box.textContent = bodyText;
+    return box;
   }
 
   function buildProgressBar(totalSteps) {
@@ -123,6 +130,14 @@ export default apiInitializer("0.8", (api) => {
 
     initialized = true;
 
+    const settings = api.container.lookup("service:site-settings");
+    const guidelinesText =
+      (settings && settings.community_guidelines_text) ||
+      "Please read our community guidelines carefully before proceeding.";
+    const privacyText =
+      (settings && settings.privacy_policy_text) ||
+      "Please read our privacy policy carefully before proceeding.";
+
     const page2Groups = groups.slice(0, 12);
     const page3Groups = groups.slice(12);
 
@@ -194,8 +209,41 @@ export default apiInitializer("0.8", (api) => {
         border-color: var(--primary-low, #d0d0d0);
       }
       .multi-step-nav .btn { display: inline-flex !important; align-items: center; gap: 6px; }
+      .mss-legal-text-box {
+        border: 1px solid var(--primary-low, #d0d0d0);
+        border-radius: 6px;
+        padding: 14px 16px;
+        max-height: 180px;
+        overflow-y: auto;
+        font-size: 0.88em;
+        line-height: 1.65;
+        color: var(--primary, #222);
+        background: var(--secondary, #fff);
+        margin-bottom: 8px;
+        white-space: pre-wrap;
+        display: none;
+      }
+      .mss-legal-text-box::-webkit-scrollbar { width: 5px; }
+      .mss-legal-text-box::-webkit-scrollbar-thumb { background: var(--primary-medium, #bbb); border-radius: 3px; }
     `;
     document.head.appendChild(styleEl);
+
+    const guidelinesTextBox = buildTextBox(guidelinesText);
+    const privacyTextBox = buildTextBox(privacyText);
+
+    const guidelinesField = page3Groups.find((g) =>
+      g.querySelector("[class*='user-field-community-guidelines']")
+    );
+    const privacyField = page3Groups.find((g) =>
+      g.querySelector("[class*='user-field-privacy-policy']")
+    );
+
+    if (guidelinesField) {
+      guidelinesField.before(guidelinesTextBox);
+    }
+    if (privacyField) {
+      privacyField.before(privacyTextBox);
+    }
 
     page3Groups.forEach((g) => {
       g.style.display = "none";
@@ -264,6 +312,11 @@ export default apiInitializer("0.8", (api) => {
         page3Groups.forEach((g) => {
           g.style.display = "";
         });
+        guidelinesTextBox.style.display = "";
+        privacyTextBox.style.display = "";
+      } else {
+        guidelinesTextBox.style.display = "none";
+        privacyTextBox.style.display = "none";
       }
 
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
