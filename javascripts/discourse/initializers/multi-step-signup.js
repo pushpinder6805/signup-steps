@@ -130,6 +130,8 @@ export default apiInitializer("0.8", (api) => {
 
     initialized = true;
 
+    const siteSettings = api.container.lookup("service:site-settings") || {};
+
     function resolveSettingText(value, fallback) {
       if (value === null || value === undefined) return fallback;
       const str = Array.isArray(value) ? value.join("\n") : String(value);
@@ -138,14 +140,14 @@ export default apiInitializer("0.8", (api) => {
 
     function getGuidelinesText() {
       return resolveSettingText(
-        api.siteSettings.community_guidelines_text,
+        siteSettings.community_guidelines_text,
         "Please read our community guidelines carefully before proceeding."
       );
     }
 
     function getPrivacyText() {
       return resolveSettingText(
-        api.siteSettings.privacy_policy_text,
+        siteSettings.privacy_policy_text,
         "Please read our privacy policy carefully before proceeding."
       );
     }
