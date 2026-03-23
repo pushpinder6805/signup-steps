@@ -401,35 +401,47 @@ export default apiInitializer("0.8", (api) => {
     );
     if (!stateField) return;
 
+    const seen = new Set();
     const tags = [];
 
-    const selectKit = stateField.querySelector("details.select-kit");
-    if (selectKit) {
-      const bodyId = selectKit.id + "-body";
-      const body = document.getElementById(bodyId);
-      const searchTarget = body || document;
-      searchTarget.querySelectorAll(".select-kit-row[aria-checked='true']").forEach((row) => {
-        const val = row.dataset.value || row.dataset.name;
-        if (val && val.trim()) tags.push(val.trim());
+    function addTag(raw) {
+      if (!raw) return;
+      const val = raw.trim();
+      if (val && !seen.has(val)) {
+        seen.add(val);
+        tags.push(val);
+      }
+    }
+
+    stateField.querySelectorAll(
+      ".select-kit-header .choice, .multi-select-header .choice, .formatted-selection .choice, .choices .choice"
+    ).forEach((choice) => {
+      const val = choice.dataset.value || choice.dataset.name;
+      if (val) {
+        addTag(val);
+      } else {
+        const nameEl = choice.querySelector(".name");
+        if (nameEl) addTag(nameEl.textContent);
+      }
+    });
+
+    if (!tags.length) {
+      stateField.querySelectorAll("[data-value]").forEach((el) => {
+        if (el.closest(".select-kit-body, .select-kit-collection")) return;
+        addTag(el.dataset.value);
       });
     }
 
     if (!tags.length) {
-      stateField.querySelectorAll(".select-kit-header .choice, .multi-select-header .choice").forEach((choice) => {
-        const val = choice.dataset.value || choice.dataset.name;
-        const nameEl = choice.querySelector(".name");
-        const raw = val || (nameEl && nameEl.textContent.trim());
-        if (raw && raw.trim()) tags.push(raw.trim());
-      });
-    }
-
-    if (!tags.length) {
-      stateField.querySelectorAll(".formatted-selection .choice, .choices .choice").forEach((choice) => {
-        const val = choice.dataset.value || choice.dataset.name;
-        const nameEl = choice.querySelector(".name");
-        const raw = val || (nameEl && nameEl.textContent.trim());
-        if (raw && raw.trim()) tags.push(raw.trim());
-      });
+      const selectKit = stateField.querySelector("details.select-kit");
+      if (selectKit) {
+        const bodyId = selectKit.id + "-body";
+        const body = document.getElementById(bodyId);
+        const searchTarget = body || stateField;
+        searchTarget.querySelectorAll(".select-kit-row[aria-checked='true']").forEach((row) => {
+          addTag(row.dataset.value || row.dataset.name);
+        });
+      }
     }
 
     if (tags.length) {
@@ -471,6 +483,7 @@ export default apiInitializer("0.8", (api) => {
   }
 
   api.onAppEvent("user:created", () => {
+    if (!_pendingStateTags.length) captureStateTags();
     setTimeout(() => waitForCurrentUserThenWatch(), 1000);
   });
 
