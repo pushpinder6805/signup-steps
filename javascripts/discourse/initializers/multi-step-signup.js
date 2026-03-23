@@ -6,7 +6,7 @@ export default apiInitializer("0.8", (api) => {
   function cleanup() {
     initialized = false;
     document
-      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-legal-block, .mss-progress-bar-wrap")
+      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-progress-bar-wrap")
       .forEach((el) => el.remove());
     document
       .querySelectorAll(
@@ -17,40 +17,6 @@ export default apiInitializer("0.8", (api) => {
       });
     const submitBtn = document.querySelector(".sign-up-button");
     if (submitBtn) submitBtn.style.display = "";
-  }
-
-  function buildLegalBlock(title, bodyText, checkboxLabel) {
-    const wrap = document.createElement("div");
-    wrap.className = "mss-legal-block";
-    wrap.style.cssText = "margin-bottom: 16px; display: none;";
-
-    const heading = document.createElement("div");
-    heading.className = "mss-legal-heading";
-    heading.textContent = title;
-
-    const box = document.createElement("div");
-    box.className = "mss-legal-box";
-    box.textContent = bodyText;
-
-    const checkRow = document.createElement("label");
-    checkRow.className = "mss-legal-check-row";
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "mss-legal-checkbox";
-
-    const checkLabel = document.createElement("span");
-    checkLabel.className = "mss-legal-check-label";
-    checkLabel.innerHTML = checkboxLabel;
-
-    checkRow.appendChild(checkbox);
-    checkRow.appendChild(checkLabel);
-
-    wrap.appendChild(heading);
-    wrap.appendChild(box);
-    wrap.appendChild(checkRow);
-
-    return { wrap, checkbox };
   }
 
   function buildProgressBar(totalSteps) {
@@ -95,7 +61,7 @@ export default apiInitializer("0.8", (api) => {
     });
   }
 
-  function getVisibleRequiredFields(step, coreFields, page2Groups, page3Groups, guidelinesCheckbox, privacyCheckbox) {
+  function getVisibleRequiredFields(step, coreFields, page2Groups, page3Groups) {
     const missing = [];
 
     if (step === 1) {
@@ -109,7 +75,7 @@ export default apiInitializer("0.8", (api) => {
 
     if (step === 2) {
       page2Groups.forEach((group) => {
-        const input = group.querySelector("input, select, textarea");
+        const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], select, textarea");
         if (input && input.required && !input.value.trim()) {
           missing.push(input);
         }
@@ -118,9 +84,13 @@ export default apiInitializer("0.8", (api) => {
 
     if (step === 3) {
       page3Groups.forEach((group) => {
-        const input = group.querySelector("input, select, textarea");
+        const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], select, textarea");
         if (input && input.required && !input.value.trim()) {
           missing.push(input);
+        }
+        const checkbox = group.querySelector("input[type=checkbox]");
+        if (checkbox && checkbox.required && !checkbox.checked) {
+          missing.push(checkbox);
         }
       });
     }
@@ -152,14 +122,6 @@ export default apiInitializer("0.8", (api) => {
     if (!groups.length) return;
 
     initialized = true;
-
-    const settings = api.container.lookup("service:site-settings");
-    const guidelinesText =
-      (settings && settings.community_guidelines_text) ||
-      "Please read our community guidelines carefully before proceeding.";
-    const privacyText =
-      (settings && settings.privacy_policy_text) ||
-      "Please read our privacy policy carefully before proceeding.";
 
     const page2Groups = groups.slice(0, 12);
     const page3Groups = groups.slice(12);
@@ -231,78 +193,9 @@ export default apiInitializer("0.8", (api) => {
         background: var(--primary-low, #d0d0d0);
         border-color: var(--primary-low, #d0d0d0);
       }
-      .multi-step-nav .btn   { display: inline-flex !important; align-items: center; gap: 6px; }
-      .mss-legal-block { margin-bottom: 20px; }
-      .mss-legal-heading {
-        font-weight: 700;
-        color: var(--tertiary, #0d47a1);
-        margin-bottom: 8px;
-        font-size: 0.95em;
-        letter-spacing: 0.01em;
-      }
-      .mss-legal-box {
-        border: 1px solid var(--primary-low, #d0d0d0);
-        border-radius: 6px;
-        padding: 14px 16px;
-        max-height: 180px;
-        overflow-y: auto;
-        font-size: 0.88em;
-        line-height: 1.65;
-        color: var(--primary, #222);
-        background: var(--secondary, #fff);
-        margin-bottom: 12px;
-        white-space: pre-wrap;
-      }
-      .mss-legal-box::-webkit-scrollbar { width: 5px; }
-      .mss-legal-box::-webkit-scrollbar-thumb { background: var(--primary-medium, #bbb); border-radius: 3px; }
-      .mss-legal-check-row {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        cursor: pointer;
-        margin-bottom: 4px;
-      }
-      .mss-legal-checkbox {
-        margin-top: 2px;
-        width: 16px;
-        height: 16px;
-        flex-shrink: 0;
-        cursor: pointer;
-        accent-color: var(--tertiary, #0d47a1);
-      }
-      .mss-legal-check-label {
-        font-size: 0.9em;
-        font-weight: 600;
-        color: var(--primary, #222);
-        line-height: 1.4;
-      }
-      .mss-legal-check-label span.required { color: var(--danger, #c00); }
+      .multi-step-nav .btn { display: inline-flex !important; align-items: center; gap: 6px; }
     `;
     document.head.appendChild(styleEl);
-
-    const { wrap: guidelinesBlock, checkbox: guidelinesCheckbox } =
-      buildLegalBlock(
-        "Community Guidelines",
-        guidelinesText,
-        `I agree to the Community Guidelines<span class="required">*</span>`
-      );
-
-    const { wrap: privacyBlock, checkbox: privacyCheckbox } = buildLegalBlock(
-      "Privacy Policy",
-      privacyText,
-      `I agree to the Privacy Policy<span class="required">*</span>`
-    );
-
-    const userFieldsEl = document.querySelector(".user-fields");
-    if (userFieldsEl) {
-      if (page3Groups.length > 0) {
-        page3Groups[0].before(guidelinesBlock);
-        page3Groups[0].before(privacyBlock);
-      } else {
-        userFieldsEl.appendChild(guidelinesBlock);
-        userFieldsEl.appendChild(privacyBlock);
-      }
-    }
 
     page3Groups.forEach((g) => {
       g.style.display = "none";
@@ -339,7 +232,9 @@ export default apiInitializer("0.8", (api) => {
     btnGroup.appendChild(nextBtn);
     nav.appendChild(btnGroup);
 
+    const userFieldsEl = document.querySelector(".user-fields");
     const formEl = document.querySelector(".create-account");
+
     if (formEl) {
       formEl.prepend(barWrap);
     } else if (userFieldsEl) {
@@ -371,9 +266,6 @@ export default apiInitializer("0.8", (api) => {
         });
       }
 
-      guidelinesBlock.style.display = step === 3 ? "" : "none";
-      privacyBlock.style.display = step === 3 ? "" : "none";
-
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
       nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
 
@@ -393,9 +285,7 @@ export default apiInitializer("0.8", (api) => {
         currentStep,
         coreFields,
         page2Groups,
-        page3Groups,
-        guidelinesCheckbox,
-        privacyCheckbox
+        page3Groups
       );
 
       if (missing.length) {
@@ -411,42 +301,6 @@ export default apiInitializer("0.8", (api) => {
       e.stopPropagation();
       if (currentStep > 1) showStep(currentStep - 1);
     });
-
-    const submitBtn = document.querySelector(".sign-up-button");
-    if (submitBtn) {
-      submitBtn.addEventListener(
-        "click",
-        (e) => {
-          if (!guidelinesCheckbox.checked || !privacyCheckbox.checked) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            if (!guidelinesCheckbox.checked) {
-              guidelinesCheckbox.closest(".mss-legal-check-row").style.outline =
-                "2px solid var(--danger, #c00)";
-              guidelinesCheckbox.closest(".mss-legal-check-row").style.borderRadius = "3px";
-            }
-            if (!privacyCheckbox.checked) {
-              privacyCheckbox.closest(".mss-legal-check-row").style.outline =
-                "2px solid var(--danger, #c00)";
-              privacyCheckbox.closest(".mss-legal-check-row").style.borderRadius = "3px";
-            }
-          }
-        },
-        true
-      );
-
-      guidelinesCheckbox.addEventListener("change", () => {
-        if (guidelinesCheckbox.checked) {
-          guidelinesCheckbox.closest(".mss-legal-check-row").style.outline = "";
-        }
-      });
-
-      privacyCheckbox.addEventListener("change", () => {
-        if (privacyCheckbox.checked) {
-          privacyCheckbox.closest(".mss-legal-check-row").style.outline = "";
-        }
-      });
-    }
 
     showStep(1);
   }
