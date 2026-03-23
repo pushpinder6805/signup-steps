@@ -130,8 +130,6 @@ export default apiInitializer("0.8", (api) => {
 
     initialized = true;
 
-    const siteSettings = api.container.lookup("service:site-settings");
-
     function resolveSettingText(value, fallback) {
       if (value === null || value === undefined) return fallback;
       const str = Array.isArray(value) ? value.join("\n") : String(value);
@@ -140,14 +138,14 @@ export default apiInitializer("0.8", (api) => {
 
     function getGuidelinesText() {
       return resolveSettingText(
-        siteSettings && siteSettings.community_guidelines_text,
+        api.siteSettings.community_guidelines_text,
         "Please read our community guidelines carefully before proceeding."
       );
     }
 
     function getPrivacyText() {
       return resolveSettingText(
-        siteSettings && siteSettings.privacy_policy_text,
+        api.siteSettings.privacy_policy_text,
         "Please read our privacy policy carefully before proceeding."
       );
     }
@@ -266,8 +264,10 @@ export default apiInitializer("0.8", (api) => {
 
     if (privacyField) {
       privacyField.before(privacyTextBox);
+    } else if (page3Groups.length > 1 && page3Groups[1].parentNode) {
+      page3Groups[1].parentNode.insertBefore(privacyTextBox, page3Groups[1]);
     } else if (guidelinesTextBox.parentNode) {
-      guidelinesTextBox.parentNode.insertBefore(privacyTextBox, guidelinesTextBox.nextSibling);
+      guidelinesTextBox.parentNode.appendChild(privacyTextBox);
     } else if (userFieldsContainer) {
       userFieldsContainer.appendChild(privacyTextBox);
     }
