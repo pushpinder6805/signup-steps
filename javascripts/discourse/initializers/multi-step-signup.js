@@ -132,16 +132,22 @@ export default apiInitializer("0.8", (api) => {
 
     const siteSettings = api.container.lookup("service:site-settings");
 
+    function resolveSettingText(value, fallback) {
+      if (!value) return fallback;
+      if (Array.isArray(value)) return value.join("\n") || fallback;
+      return String(value) || fallback;
+    }
+
     function getGuidelinesText() {
-      return (
-        (siteSettings && siteSettings.community_guidelines_text) ||
+      return resolveSettingText(
+        siteSettings && siteSettings.community_guidelines_text,
         "Please read our community guidelines carefully before proceeding."
       );
     }
 
     function getPrivacyText() {
-      return (
-        (siteSettings && siteSettings.privacy_policy_text) ||
+      return resolveSettingText(
+        siteSettings && siteSettings.privacy_policy_text,
         "Please read our privacy policy carefully before proceeding."
       );
     }
