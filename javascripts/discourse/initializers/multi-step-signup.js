@@ -403,43 +403,38 @@ export default apiInitializer("0.8", (api) => {
 
     const tags = [];
 
-    stateField.querySelectorAll(".select-kit-row.is-selected").forEach((row) => {
-      const val = row.dataset.value || row.dataset.id;
-      if (val) tags.push(val.trim());
-    });
+    const selectKit = stateField.querySelector("details.select-kit");
+    if (selectKit) {
+      const bodyId = selectKit.id + "-body";
+      const body = document.getElementById(bodyId);
+      const searchTarget = body || document;
+      searchTarget.querySelectorAll(".select-kit-row[aria-checked='true']").forEach((row) => {
+        const val = row.dataset.value || row.dataset.name;
+        if (val && val.trim()) tags.push(val.trim());
+      });
+    }
 
     if (!tags.length) {
-      stateField.querySelectorAll(".choices .choice").forEach((choice) => {
-        const val = choice.dataset.value || choice.dataset.id;
+      stateField.querySelectorAll(".select-kit-header .choice, .multi-select-header .choice").forEach((choice) => {
+        const val = choice.dataset.value || choice.dataset.name;
         const nameEl = choice.querySelector(".name");
         const raw = val || (nameEl && nameEl.textContent.trim());
-        if (raw) tags.push(raw.trim());
+        if (raw && raw.trim()) tags.push(raw.trim());
       });
     }
 
     if (!tags.length) {
-      stateField.querySelectorAll(".selected-name .name, .select-kit-selected-name .name").forEach((el) => {
-        const row = el.closest("[data-value], [data-id]");
-        const val = row && (row.dataset.value || row.dataset.id);
-        const raw = val || el.textContent.trim();
-        if (raw && raw !== "(select an option)") tags.push(raw.trim());
+      stateField.querySelectorAll(".formatted-selection .choice, .choices .choice").forEach((choice) => {
+        const val = choice.dataset.value || choice.dataset.name;
+        const nameEl = choice.querySelector(".name");
+        const raw = val || (nameEl && nameEl.textContent.trim());
+        if (raw && raw.trim()) tags.push(raw.trim());
       });
-    }
-
-    if (!tags.length) {
-      const hiddenInput = stateField.querySelector("input[type=hidden]");
-      if (hiddenInput && hiddenInput.value) {
-        hiddenInput.value
-          .split(",")
-          .map((v) => v.trim())
-          .filter(Boolean)
-          .forEach((v) => tags.push(v));
-      }
     }
 
     if (tags.length) {
       _pendingStateTags = tags.map((t) =>
-        t.toLowerCase().replace(/\s+/g, "-")
+        t.trim().toLowerCase().replace(/\s+/g, "-")
       );
     }
   }
