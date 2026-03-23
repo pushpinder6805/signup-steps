@@ -133,9 +133,9 @@ export default apiInitializer("0.8", (api) => {
     const siteSettings = api.container.lookup("service:site-settings");
 
     function resolveSettingText(value, fallback) {
-      if (!value) return fallback;
-      if (Array.isArray(value)) return value.join("\n") || fallback;
-      return String(value) || fallback;
+      if (value === null || value === undefined) return fallback;
+      const str = Array.isArray(value) ? value.join("\n") : String(value);
+      return str.trim() || fallback;
     }
 
     function getGuidelinesText() {
