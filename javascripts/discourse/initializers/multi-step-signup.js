@@ -1,4 +1,5 @@
 import { apiInitializer } from "discourse/lib/api";
+import { ajax } from "discourse/lib/ajax";
 
 export default apiInitializer("0.8", (api) => {
   let initialized = false;
@@ -402,14 +403,28 @@ export default apiInitializer("0.8", (api) => {
 
     const tags = [];
 
-    stateField.querySelectorAll(
-      ".select-kit-selected-name .name, .multi-select-header .choice .name, .choices .selected-name .name"
-    ).forEach((el) => {
-      const raw = el.textContent.trim();
-      if (raw && raw !== "(select an option)") {
-        tags.push(raw.toLowerCase().replace(/\s+/g, "-"));
-      }
+    stateField.querySelectorAll(".select-kit-row.is-selected").forEach((row) => {
+      const val = row.dataset.value || row.dataset.id;
+      if (val) tags.push(val.trim());
     });
+
+    if (!tags.length) {
+      stateField.querySelectorAll(".choices .choice").forEach((choice) => {
+        const val = choice.dataset.value || choice.dataset.id;
+        const nameEl = choice.querySelector(".name");
+        const raw = val || (nameEl && nameEl.textContent.trim());
+        if (raw) tags.push(raw.trim());
+      });
+    }
+
+    if (!tags.length) {
+      stateField.querySelectorAll(".selected-name .name, .select-kit-selected-name .name").forEach((el) => {
+        const row = el.closest("[data-value], [data-id]");
+        const val = row && (row.dataset.value || row.dataset.id);
+        const raw = val || el.textContent.trim();
+        if (raw && raw !== "(select an option)") tags.push(raw.trim());
+      });
+    }
 
     if (!tags.length) {
       const hiddenInput = stateField.querySelector("input[type=hidden]");
@@ -422,37 +437,46 @@ export default apiInitializer("0.8", (api) => {
       }
     }
 
-    if (tags.length) _pendingStateTags = tags;
+    if (tags.length) {
+      _pendingStateTags = tags.map((t) =>
+        t.toLowerCase().replace(/\s+/g, "-")
+      );
+    }
+  }
+
+  function waitForCurrentUserThenWatch(retries) {
+    if (!_pendingStateTags.length) return;
+    const remaining = retries === undefined ? 20 : retries;
+    if (remaining <= 0) return;
+
+    const currentUser = api.getCurrentUser ? api.getCurrentUser() : null;
+    const username = currentUser && currentUser.username;
+
+    if (username) {
+      applyStateTagWatching();
+    } else {
+      setTimeout(() => waitForCurrentUserThenWatch(remaining - 1), 500);
+    }
   }
 
   async function applyStateTagWatching() {
     if (!_pendingStateTags.length) return;
+    const tagsToWatch = [..._pendingStateTags];
+    _pendingStateTags = [];
 
-    const csrf = document.querySelector('meta[name="csrf-token"]');
-    const csrfToken = csrf ? csrf.getAttribute("content") : null;
-
-    const headers = {
-      "Content-Type": "application/json",
-      "X-Requested-With": "XMLHttpRequest",
-    };
-    if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
-
-    for (const tag of _pendingStateTags) {
+    for (const tag of tagsToWatch) {
       try {
-        await fetch(`/tag/${encodeURIComponent(tag)}/notifications`, {
-          method: "PUT",
-          headers,
-          body: JSON.stringify({ tag_notification: { notification_level: 3 } }),
-          credentials: "same-origin",
+        await ajax(`/tag/${encodeURIComponent(tag)}/notifications`, {
+          type: "PUT",
+          contentType: "application/json",
+          data: JSON.stringify({ tag_notification: { notification_level: 3 } }),
         });
       } catch (_) {}
     }
-
-    _pendingStateTags = [];
   }
 
   api.onAppEvent("user:created", () => {
-    applyStateTagWatching();
+    setTimeout(() => waitForCurrentUserThenWatch(), 1000);
   });
 
   api.onPageChange(() => {
@@ -460,16 +484,13 @@ export default apiInitializer("0.8", (api) => {
     setTimeout(() => initMultiStep(), 300);
   });
 
-  (function watchForSignupSubmit() {
-    document.addEventListener(
-      "click",
-      (e) => {
-        const btn = e.target.closest(".sign-up-button, .signup-page-cta__signup");
-        if (btn) {
-          captureStateTags();
-        }
-      },
-      true
-    );
-  })();
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (e.target.closest(".sign-up-button, .signup-page-cta__signup")) {
+        captureStateTags();
+      }
+    },
+    true
+  );
 });
