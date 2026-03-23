@@ -309,16 +309,14 @@ export default apiInitializer("0.8", (api) => {
       el.style.display = "none";
     });
 
-    const heading = formEl && (
-      formEl.querySelector("h2") ||
-      formEl.querySelector(".create-account-title") ||
-      formEl.querySelector("h1")
-    );
+    const headingContainer =
+      document.querySelector("#create-account-title") ||
+      document.querySelector(".login-welcome-header");
 
-    if (heading) {
-      heading.before(barWrap);
+    if (headingContainer) {
+      headingContainer.before(barWrap);
     } else if (formEl) {
-      formEl.prepend(barWrap);
+      formEl.before(barWrap);
     } else if (userFieldsEl) {
       userFieldsEl.before(barWrap);
     }
