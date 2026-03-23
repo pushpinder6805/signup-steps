@@ -131,6 +131,14 @@ export default apiInitializer("0.8", (api) => {
     initialized = true;
 
     const siteSettings = api.container.lookup("service:site-settings") || {};
+    const guidelinesKeys = Object.keys(siteSettings).filter((k) =>
+      k.toLowerCase().includes("guideline")
+    );
+    const privacyKeys = Object.keys(siteSettings).filter((k) =>
+      k.toLowerCase().includes("privacy")
+    );
+    // eslint-disable-next-line no-console
+    console.log("[MSS] guideline keys:", guidelinesKeys, "privacy keys:", privacyKeys);
 
     function resolveSettingText(value, fallback) {
       if (value === null || value === undefined) return fallback;
@@ -140,14 +148,15 @@ export default apiInitializer("0.8", (api) => {
 
     function getGuidelinesText() {
       return resolveSettingText(
-        siteSettings.community_guidelines_text,
+        siteSettings.community_guidelines_text ??
+          siteSettings.communityGuidelinesText,
         "Please read our community guidelines carefully before proceeding."
       );
     }
 
     function getPrivacyText() {
       return resolveSettingText(
-        siteSettings.privacy_policy_text,
+        siteSettings.privacy_policy_text ?? siteSettings.privacyPolicyText,
         "Please read our privacy policy carefully before proceeding."
       );
     }
