@@ -434,7 +434,7 @@ export default apiInitializer("0.8", (api) => {
 
     if (tags.length) {
       _pendingStateTags = tags.map((t) =>
-        t.trim().toLowerCase().replace(/\s+/g, "-")
+        t.trim().toLowerCase().replace(/\s+/g, "_")
       );
     }
   }
