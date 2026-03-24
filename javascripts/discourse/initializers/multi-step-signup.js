@@ -40,12 +40,7 @@ export default apiInitializer("0.8", (api) => {
     document.querySelectorAll(".multi-step-nav").forEach((el) => el.remove());
 
     document
-      .querySelectorAll(
-        ".user-fields .input-group,
-         .create-account-email,
-         .create-account__username,
-         .create-account__password"
-      )
+      .querySelectorAll(".user-fields .input-group, .create-account-email, .create-account__username, .create-account__password")
       .forEach((el) => safeShow(el));
 
     if (observer) {
@@ -55,7 +50,6 @@ export default apiInitializer("0.8", (api) => {
   }
 
   // -------- VALIDATION --------
-
   function getStepMissingFields(stepContainers) {
     const missing = [];
 
@@ -102,12 +96,14 @@ export default apiInitializer("0.8", (api) => {
 
       const clear = () => {
         wrap.style.border = "";
-        input?.removeEventListener("input", clear);
-        input?.removeEventListener("change", clear);
+        input && input.removeEventListener("input", clear);
+        input && input.removeEventListener("change", clear);
       };
 
-      input?.addEventListener("input", clear);
-      input?.addEventListener("change", clear);
+      if (input) {
+        input.addEventListener("input", clear);
+        input.addEventListener("change", clear);
+      }
     });
 
     if (wrappers.length) {
@@ -140,10 +136,9 @@ export default apiInitializer("0.8", (api) => {
       confirmField.className =
         "create-account__password mss-password-confirm";
 
-      confirmField.innerHTML = `
-        <label>Re-enter Password*</label>
-        <input type="password" required />
-      `;
+      confirmField.innerHTML =
+        "<label>Re-enter Password*</label>" +
+        "<input type='password' required />";
 
       passwordField.after(confirmField);
     }
@@ -259,7 +254,6 @@ export default apiInitializer("0.8", (api) => {
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
-      // Step 1 validation
       if (currentStep === 1) {
         const emailInput = emailField.querySelector("input");
         const usernameInput = usernameField.querySelector("input");
@@ -292,7 +286,6 @@ export default apiInitializer("0.8", (api) => {
         return;
       }
 
-      // Step 2–4 validation
       let fields = [];
       if (currentStep === 2) fields = step2;
       if (currentStep === 3) fields = step3;
