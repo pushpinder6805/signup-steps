@@ -21,7 +21,7 @@ export default apiInitializer("0.8", (api) => {
     initialized = false;
 
     document
-      .querySelectorAll(".multi-step-nav, .mss-progress-bar-wrap")
+      .querySelectorAll(".multi-step-nav")
       .forEach((el) => el.remove());
 
     document
@@ -38,9 +38,7 @@ export default apiInitializer("0.8", (api) => {
     const missing = [];
 
     containers.forEach((wrap) => {
-      const input = wrap.querySelector(
-        "input, select, textarea"
-      );
+      const input = wrap.querySelector("input, select, textarea");
 
       if (!input) return;
 
@@ -88,11 +86,28 @@ export default apiInitializer("0.8", (api) => {
       )
     );
 
-    const step2 = groups.slice(0, Math.ceil(groups.length / 2));
-    const step3 = groups.slice(Math.ceil(groups.length / 2));
+    // detect special fields
+    const guidelinesField = groups.find((g) =>
+      g.innerHTML.includes("community-guidelines")
+    );
+
+    const privacyField = groups.find((g) =>
+      g.innerHTML.includes("privacy-policy")
+    );
+
+    // remaining fields
+    const normalFields = groups.filter(
+      (g) => g !== guidelinesField && g !== privacyField
+    );
+
+    const mid = Math.ceil(normalFields.length / 2);
+    const step2 = normalFields.slice(0, mid);
+    const step3 = normalFields.slice(mid);
+
+    const step4 = [guidelinesField, privacyField].filter(Boolean);
 
     let currentStep = 1;
-    const totalSteps = 3;
+    const totalSteps = 4;
 
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
@@ -129,11 +144,16 @@ export default apiInitializer("0.8", (api) => {
         step === 3 ? safeShow(el) : safeHide(el)
       );
 
+      // Step 4 (ONLY legal fields)
+      step4.forEach((el) =>
+        step === 4 ? safeShow(el) : safeHide(el)
+      );
+
       const submitBtn = document.querySelector(".sign-up-button");
 
       if (submitBtn) {
         submitBtn.style.display = step === totalSteps ? "" : "none";
-        submitBtn.disabled = false; // safety
+        submitBtn.disabled = false;
       }
 
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
@@ -155,6 +175,10 @@ export default apiInitializer("0.8", (api) => {
 
       if (currentStep === 3) {
         missing = getRequiredInputs(step3);
+      }
+
+      if (currentStep === 4) {
+        missing = getRequiredInputs(step4);
       }
 
       if (missing.length) {
