@@ -96,9 +96,6 @@ export default apiInitializer("0.8", (api) => {
     if (!header) return;
 
     const sync = () => {
-      const selectedName = header.querySelector(".selected-name");
-      if (!selectedName) return;
-
       const selectedChoices = Array.from(
         selectKit.querySelectorAll(".selected-choice")
       );
@@ -109,33 +106,14 @@ export default apiInitializer("0.8", (api) => {
       selectKit.setAttribute("data-placeholder", text);
       header.setAttribute("data-placeholder", text);
 
+      if (hasSelection) return;
+
+      const selectedName = header.querySelector(".selected-name");
+      if (!selectedName) return;
+
       const currentText = (selectedName.textContent || "").trim();
-
-      if (!hasSelection) {
-        if (!currentText || /select an option|please select/i.test(currentText)) {
-          selectedName.textContent = text;
-        }
-        return;
-      }
-
-      if (currentText === text || /select an option|please select/i.test(currentText)) {
-        const labels = selectedChoices
-          .map((el) => el.textContent.trim())
-          .filter(Boolean);
-
-        if (labels.length === 0) {
-          const selectedRow =
-            selectKit.querySelector(".select-kit-row.is-selected") ||
-            selectKit.querySelector(".select-kit-row[aria-selected='true']");
-          const rowLabel = selectedRow?.querySelector(".name")?.textContent?.trim();
-          if (rowLabel) labels.push(rowLabel);
-        }
-
-        if (labels.length === 1) {
-          selectedName.textContent = labels[0];
-        } else if (labels.length > 1) {
-          selectedName.textContent = `${labels.length} selected`;
-        }
+      if (!currentText || /select an option|please select/i.test(currentText)) {
+        selectedName.textContent = text;
       }
     };
 
