@@ -88,6 +88,8 @@ export default apiInitializer("0.8", (api) => {
 
     if (step === 2) {
       page2Groups.forEach((group) => {
+        if (group.style.display === "none") return;
+
         const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], select, textarea");
         if (input && input.required && !input.value.trim()) {
           missing.push(input);
@@ -97,10 +99,13 @@ export default apiInitializer("0.8", (api) => {
 
     if (step === 3) {
       page3Groups.forEach((group) => {
+        if (group.style.display === "none") return;
+
         const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], select, textarea");
         if (input && input.required && !input.value.trim()) {
           missing.push(input);
         }
+
         const checkbox = group.querySelector("input[type=checkbox]");
         if (checkbox && checkbox.required && !checkbox.checked) {
           missing.push(checkbox);
@@ -321,8 +326,8 @@ export default apiInitializer("0.8", (api) => {
       }
 
       .multi-step-nav .btn-primary {
-        background: var(--primary-low-mid, #c8c8c8);
-        color: var(--primary, #222);
+        background: var(--tertiary, #0088cc);
+        color: #fff;
         border: none;
         padding: 14px 0;
         border-radius: 24px;
@@ -335,7 +340,7 @@ export default apiInitializer("0.8", (api) => {
       }
 
       .multi-step-nav .btn-primary:hover {
-        background: var(--primary-low, #d8d8d8);
+        background: var(--tertiary-hover, #006ba8);
       }
 
       .multi-step-nav .btn {
@@ -348,6 +353,14 @@ export default apiInitializer("0.8", (api) => {
       .multi-step-nav .btn[style*="display: none"],
       .multi-step-nav .btn[style*="display:none"] {
         display: none !important;
+      }
+
+      .mss-complete-btn {
+        background: var(--success, #1ca551) !important;
+      }
+
+      .mss-complete-btn:hover {
+        background: var(--success-hover, #178f45) !important;
       }
 
       .signup-page-cta {
@@ -586,82 +599,73 @@ export default apiInitializer("0.8", (api) => {
       e.preventDefault();
       e.stopPropagation();
 
-      const missingCore = getVisibleRequiredFields(1, coreFields, page2Groups, page3Groups);
-      const missingPage2 = getVisibleRequiredFields(2, coreFields, page2Groups, page3Groups);
-      const missingPage3 = getVisibleRequiredFields(3, coreFields, page2Groups, page3Groups);
-      const allMissing = [...missingCore, ...missingPage2, ...missingPage3];
-
-      if (allMissing.length) {
-        highlightMissing(allMissing);
-
+      function showNotice(message) {
         let noticeEl = document.querySelector(".mss-validation-notice");
-        if (!noticeEl) {
-          noticeEl = document.createElement("div");
-          noticeEl.className = "mss-validation-notice";
-          noticeEl.textContent = "Please fill in all required fields before completing signup.";
-          noticeEl.style.cssText = `
-            background: var(--danger-low, #ffe8e8);
-            color: var(--danger, #c00);
-            border: 1px solid var(--danger, #c00);
-            border-radius: 6px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            font-size: 0.95em;
-            text-align: center;
-          `;
-          nav.before(noticeEl);
-
-          setTimeout(() => {
-            if (noticeEl && noticeEl.parentNode) {
-              noticeEl.style.transition = "opacity 0.3s";
-              noticeEl.style.opacity = "0";
-              setTimeout(() => noticeEl.remove(), 300);
-            }
-          }, 5000);
+        if (noticeEl) {
+          noticeEl.remove();
         }
 
+        noticeEl = document.createElement("div");
+        noticeEl.className = "mss-validation-notice";
+        noticeEl.textContent = message;
+        noticeEl.style.cssText = `
+          background: var(--danger-low, #ffe8e8);
+          color: var(--danger, #c00);
+          border: 1px solid var(--danger, #c00);
+          border-radius: 6px;
+          padding: 12px 16px;
+          margin-bottom: 16px;
+          font-size: 0.95em;
+          text-align: center;
+        `;
+        nav.before(noticeEl);
+
+        setTimeout(() => {
+          if (noticeEl && noticeEl.parentNode) {
+            noticeEl.style.transition = "opacity 0.3s";
+            noticeEl.style.opacity = "0";
+            setTimeout(() => noticeEl.remove(), 300);
+          }
+        }, 5000);
+      }
+
+      const missingPage3 = getVisibleRequiredFields(3, coreFields, page2Groups, page3Groups);
+
+      if (missingPage3.length) {
+        highlightMissing(missingPage3);
+        showNotice("Please fill in all required fields before completing signup.");
         return false;
       }
 
-      const passwordInput = passwordField.querySelector("input");
+      const missingCore = getVisibleRequiredFields(1, coreFields, page2Groups, page3Groups);
+      const missingPage2 = getVisibleRequiredFields(2, coreFields, page2Groups, page3Groups);
+
+      if (missingCore.length || missingPage2.length) {
+        showNotice("Please complete all previous pages. Some required fields are missing.");
+        return false;
+      }
+
+      const passwordInput = passwordField ? passwordField.querySelector("input") : null;
       const confirmInput = passwordConfirmField ? passwordConfirmField.querySelector("input") : null;
+
       if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
         confirmInput.style.outline = "2px solid var(--danger, #c00)";
         confirmInput.style.borderRadius = "4px";
-        confirmInput.focus();
-
-        let noticeEl = document.querySelector(".mss-validation-notice");
-        if (!noticeEl) {
-          noticeEl = document.createElement("div");
-          noticeEl.className = "mss-validation-notice";
-          noticeEl.textContent = "Passwords do not match.";
-          noticeEl.style.cssText = `
-            background: var(--danger-low, #ffe8e8);
-            color: var(--danger, #c00);
-            border: 1px solid var(--danger, #c00);
-            border-radius: 6px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            font-size: 0.95em;
-            text-align: center;
-          `;
-          nav.before(noticeEl);
-
-          setTimeout(() => {
-            if (noticeEl && noticeEl.parentNode) {
-              noticeEl.style.transition = "opacity 0.3s";
-              noticeEl.style.opacity = "0";
-              setTimeout(() => noticeEl.remove(), 300);
-            }
-          }, 5000);
-        }
-
+        showNotice("Passwords do not match.");
         return false;
       }
+
+      captureStateTags();
 
       const actualSubmitBtn = document.querySelector(".sign-up-button");
       if (actualSubmitBtn) {
         actualSubmitBtn.click();
+      } else {
+        const form = document.querySelector(".create-account");
+        if (form) {
+          const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+          form.dispatchEvent(submitEvent);
+        }
       }
     });
 
