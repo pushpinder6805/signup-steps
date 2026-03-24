@@ -129,6 +129,45 @@ export default apiInitializer("0.8", (api) => {
     });
   }
 
+  function ensureConfirmPasswordToggle(passwordField, confirmField) {
+    if (!passwordField || !confirmField) return;
+
+    const confirmInput = confirmField.querySelector("input");
+    if (!confirmInput) return;
+
+    if (confirmField.querySelector(".toggle-password-mask")) return;
+
+    const sourceToggle = passwordField.querySelector(".toggle-password-mask");
+    let toggle;
+
+    if (sourceToggle) {
+      toggle = sourceToggle.cloneNode(true);
+    } else {
+      toggle = document.createElement("button");
+      toggle.className = "btn no-text btn-icon btn-transparent toggle-password-mask";
+      toggle.title = "Show password";
+      toggle.type = "button";
+      toggle.innerHTML =
+        '<svg class="fa d-icon d-icon-far-eye svg-icon fa-width-auto svg-string" width="1em" height="1em" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><use href="#far-eye"></use></svg>  <span aria-hidden="true">\n      &ZeroWidthSpace;\n    </span>';
+    }
+
+    toggle.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      if (confirmInput.type === "password") {
+        confirmInput.type = "text";
+        toggle.title = "Hide password";
+        toggle.setAttribute("aria-label", "Hide password");
+      } else {
+        confirmInput.type = "password";
+        toggle.title = "Show password";
+        toggle.setAttribute("aria-label", "Show password");
+      }
+    });
+
+    confirmField.appendChild(toggle);
+  }
+
   function cleanup() {
     initialized = false;
 
@@ -275,6 +314,8 @@ export default apiInitializer("0.8", (api) => {
         "<label>Re-enter Password*</label><input type='password' required />";
       passwordField.after(confirmField);
     }
+
+    ensureConfirmPasswordToggle(passwordField, confirmField);
 
     const coreFields = [emailField, usernameField, passwordField, confirmField];
 
