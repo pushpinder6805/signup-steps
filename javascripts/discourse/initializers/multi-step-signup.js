@@ -95,28 +95,61 @@ export default apiInitializer("0.8", (api) => {
     const header = selectKit.querySelector(".select-kit-header");
     if (!header) return;
 
-    const selectedChoices = selectKit.querySelectorAll(".selected-choice");
-    const value = header.getAttribute("data-value");
-    const hasSelection =
-      (value && value.trim() !== "") || selectedChoices.length > 0;
+    const sync = () => {
+      const selectedName = header.querySelector(".selected-name");
+      if (!selectedName) return;
 
-    if (hasSelection) return;
+      const selectedChoices = Array.from(
+        selectKit.querySelectorAll(".selected-choice")
+      );
+      const value = header.getAttribute("data-value");
+      const hasSelection =
+        (value && value.trim() !== "") || selectedChoices.length > 0;
 
-    selectKit.setAttribute("data-placeholder", text);
-    header.setAttribute("data-placeholder", text);
+      selectKit.setAttribute("data-placeholder", text);
+      header.setAttribute("data-placeholder", text);
 
-    const selectedName = header.querySelector(".selected-name");
-    const currentText = selectedName
-      ? selectedName.textContent
-      : header.textContent;
+      const currentText = (selectedName.textContent || "").trim();
 
-    if (
-      !currentText ||
-      !currentText.trim() ||
-      /select an option|please select/i.test(currentText)
-    ) {
-      if (selectedName) selectedName.textContent = text;
-      else header.textContent = text;
+      if (!hasSelection) {
+        if (!currentText || /select an option|please select/i.test(currentText)) {
+          selectedName.textContent = text;
+        }
+        return;
+      }
+
+      if (currentText === text || /select an option|please select/i.test(currentText)) {
+        const labels = selectedChoices
+          .map((el) => el.textContent.trim())
+          .filter(Boolean);
+
+        if (labels.length === 0) {
+          const selectedRow =
+            selectKit.querySelector(".select-kit-row.is-selected") ||
+            selectKit.querySelector(".select-kit-row[aria-selected='true']");
+          const rowLabel = selectedRow?.querySelector(".name")?.textContent?.trim();
+          if (rowLabel) labels.push(rowLabel);
+        }
+
+        if (labels.length === 1) {
+          selectedName.textContent = labels[0];
+        } else if (labels.length > 1) {
+          selectedName.textContent = `${labels.length} selected`;
+        }
+      }
+    };
+
+    sync();
+
+    if (!selectKit.getAttribute("data-placeholder-observer")) {
+      selectKit.setAttribute("data-placeholder-observer", "true");
+      const observer = new MutationObserver(() => sync());
+      observer.observe(selectKit, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ["data-value", "class", "aria-selected"],
+      });
     }
   }
 
