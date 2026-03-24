@@ -361,7 +361,8 @@ export default apiInitializer("0.8", (api) => {
       userFieldsContainer.appendChild(privacyTextBox);
     }
 
-    page3Groups.forEach((g) => {
+    // Initially hide all custom field groups
+    groups.forEach((g) => {
       g.style.display = "none";
     });
 
