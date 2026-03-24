@@ -1,9 +1,11 @@
 #create-account-subheading {
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  line-height: 140%;
-  color: #666;
-  margin-top: 4px;
+    font-family: Arial;
+    font-size: 17px;
+    line-height: 140%;
+    color: #002D73;
+    margin-top: 20px;
+    justify-content: center;
+    display: flex !important;
 }
 
 login-fullpage .login-left-side, .signup-fullpage .login-left-side, .invites-show .login-left-side, .password-reset-page .login-left-side {
