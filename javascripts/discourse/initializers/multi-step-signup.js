@@ -38,6 +38,97 @@ export default apiInitializer("0.8", (api) => {
     });
   }
 
+  function normalizePlaceholderKey(text) {
+    return (text || "")
+      .toLowerCase()
+      .replace(/\*/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  const placeholderConfig = [
+    { key: "email", text: "Email Address" },
+    { key: "username", text: "Username" },
+    { key: "password", text: "Password" },
+    { key: "re-enter password", text: "Password" },
+    { key: "first name", text: "First Name" },
+    { key: "last name", text: "Last Name" },
+    { key: "pronouns", text: "Select Pronouns" },
+    { key: "phone number", text: "(---) --- ----" },
+    { key: "state", text: "Select a State" },
+    { key: "city", text: "Select a City" },
+    { key: "zip", text: "Zip Code" },
+    { key: "role", text: "Select your Role" },
+    { key: "organization", text: "Organization Name" },
+    { key: "type of organization", text: "Organization Type" },
+    {
+      key: "groups your organization serves",
+      text: "Select Groups Served by your Organization",
+    },
+    { key: "which state(s)", text: "Select State(s)" },
+  ];
+
+  const placeholderMap = new Map(
+    placeholderConfig.map(({ key, text }) => [
+      normalizePlaceholderKey(key),
+      text,
+    ])
+  );
+
+  function getPlaceholderText(labelText) {
+    const normalized = normalizePlaceholderKey(labelText);
+    if (!normalized) return "";
+
+    if (placeholderMap.has(normalized)) return placeholderMap.get(normalized);
+
+    for (const [key, text] of placeholderMap.entries()) {
+      if (normalized.includes(key)) return text;
+    }
+
+    return "";
+  }
+
+  function applyPlaceholders() {
+    const coreFieldSelectors = [
+      { selector: ".create-account-email input", key: "email" },
+      { selector: ".create-account__username input", key: "username" },
+      {
+        selector: ".create-account__password:not(.mss-password-confirm) input",
+        key: "password",
+      },
+      { selector: ".mss-password-confirm input", key: "re-enter password" },
+    ];
+
+    coreFieldSelectors.forEach(({ selector, key }) => {
+      const input = document.querySelector(selector);
+      const text = getPlaceholderText(key);
+      if (input && text) input.setAttribute("placeholder", text);
+    });
+
+    const groups = Array.from(
+      document.querySelectorAll(".user-fields .input-group")
+    );
+
+    groups.forEach((wrap) => {
+      const label = wrap.querySelector("label");
+      const text = getPlaceholderText(label?.innerText || "");
+      if (!text) return;
+
+      const input = wrap.querySelector("input, textarea");
+      if (input) {
+        input.setAttribute("placeholder", text);
+        return;
+      }
+
+      const selectKit = wrap.querySelector(".select-kit");
+      if (selectKit) {
+        const header = selectKit.querySelector(".select-kit-header");
+        if (header) header.setAttribute("data-placeholder", text);
+      }
+    });
+  }
+
   function cleanup() {
     initialized = false;
 
@@ -161,52 +252,6 @@ export default apiInitializer("0.8", (api) => {
     else field.appendChild(box);
   }
 
-  // ✅ ONLY ADDITION: PLACEHOLDERS
-  function applyPlaceholders() {
-    const map = [
-      { key: "email", text: "Email Address" },
-      { key: "username", text: "Username" },
-      { key: "password", text: "Password" },
-      { key: "re-enter password", text: "Password" },
-      { key: "first name", text: "First Name" },
-      { key: "last name", text: "Last Name" },
-      { key: "pronouns", text: "Select Pronouns" },
-      { key: "state", text: "Select a State" },
-      { key: "city", text: "Select a City" },
-      { key: "zip", text: "Zip Code" },
-      { key: "role", text: "Select your Role" },
-      { key: "organization", text: "Organization Name" },
-      { key: "type of organization", text: "Organization Type" },
-      { key: "groups your organization serves", text: "Select Groups Served by your Organization" },
-      { key: "which state(s)", text: "Select State(s)" }
-    ];
-
-    document.querySelectorAll(".user-fields .input-group, .user-field").forEach((wrap) => {
-      const label = wrap.querySelector("label");
-      if (!label) return;
-
-      const labelText = label.innerText.toLowerCase();
-
-      const input = wrap.querySelector("input, textarea");
-      if (input) {
-        const match = map.find((m) => labelText.includes(m.key));
-        if (match) input.setAttribute("placeholder", match.text);
-      }
-
-      const selectHeader = wrap.querySelector(".select-kit-header");
-      if (selectHeader) {
-        const match = map.find((m) => labelText.includes(m.key));
-        if (match) {
-          const el =
-            selectHeader.querySelector(".name") ||
-            selectHeader.querySelector(".formatted-selection");
-
-          if (el) el.innerText = match.text;
-        }
-      }
-    });
-  }
-
   function initMultiStep() {
     if (initialized) return;
 
@@ -320,6 +365,7 @@ export default apiInitializer("0.8", (api) => {
       updateCTAButtonText(step);
     }
 
+    // ✅ ONLY CHANGE: Step 1 password validation added safely
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
@@ -377,9 +423,7 @@ export default apiInitializer("0.8", (api) => {
       showStep(currentStep + 1);
     });
 
-    // ✅ CALL PLACEHOLDER (ONLY ADDITION)
-    setTimeout(applyPlaceholders, 300);
-
+    applyPlaceholders();
     showStep(1);
   }
 
