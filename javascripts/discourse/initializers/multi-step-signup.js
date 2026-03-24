@@ -486,6 +486,17 @@ export default apiInitializer("0.8", (api) => {
     function showStep(step) {
       currentStep = step;
 
+      const heading = document.querySelector("#create-account-title");
+      if (heading) {
+        if (step === 1) {
+          heading.textContent = "Create your account";
+        } else if (step === 2) {
+          heading.textContent = "Enter Your Details";
+        } else if (step === 3) {
+          heading.textContent = "Review & Accept";
+        }
+      }
+
       coreFields.forEach((f) => {
         f.style.display = step === 1 ? "" : "none";
       });
@@ -511,7 +522,7 @@ export default apiInitializer("0.8", (api) => {
         privacyTextBox.classList.add("mss-hidden");
       }
 
-      backBtn.style.display = step === 1 ? "none" : "inline-flex";
+      backBtn.style.display = (step === 1 || step === 2) ? "none" : "inline-flex";
       nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
 
       const submitBtn = document.querySelector(".sign-up-button");
