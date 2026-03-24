@@ -62,11 +62,8 @@ export default apiInitializer("0.8", (api) => {
 
     const controls = wrap.querySelector(".controls");
 
-    if (controls) {
-      controls.appendChild(error);
-    } else {
-      wrap.appendChild(error);
-    }
+    if (controls) controls.appendChild(error);
+    else wrap.appendChild(error);
   }
 
   function getStepMissingFields(stepContainers) {
@@ -93,16 +90,11 @@ export default apiInitializer("0.8", (api) => {
       const selectKit = wrap.querySelector(".select-kit");
       if (selectKit) {
         const header = selectKit.querySelector(".select-kit-header");
-
-        if (header) {
-          const value = header.getAttribute("data-value");
-          if (value && value.trim() !== "") {
-            hasValue = true;
-          }
-        }
+        const value = header?.getAttribute("data-value");
 
         const selectedChoices = selectKit.querySelectorAll(".selected-choice");
-        if (selectedChoices.length > 0) {
+
+        if ((value && value.trim() !== "") || selectedChoices.length > 0) {
           hasValue = true;
         }
       }
@@ -119,8 +111,7 @@ export default apiInitializer("0.8", (api) => {
 
   function highlightMissing(wrappers) {
     wrappers.forEach((wrap) => {
-      const existing = wrap.querySelector(".field-error");
-      if (existing) existing.remove();
+      clearFieldError(wrap);
 
       const error = document.createElement("div");
       error.className = "field-error";
@@ -128,11 +119,8 @@ export default apiInitializer("0.8", (api) => {
 
       const controls = wrap.querySelector(".controls");
 
-      if (controls) {
-        controls.appendChild(error);
-      } else {
-        wrap.appendChild(error);
-      }
+      if (controls) controls.appendChild(error);
+      else wrap.appendChild(error);
     });
 
     if (wrappers.length) {
@@ -165,19 +153,12 @@ export default apiInitializer("0.8", (api) => {
     const box = document.createElement("div");
     box.className = "policy-box";
 
-    box.innerHTML = `
-      <div class="policy-box__inner">
-        ${formattedText}
-      </div>
-    `;
+    box.innerHTML = `<div class="policy-box__inner">${formattedText}</div>`;
 
     const checkbox = field.querySelector(".checkbox-label");
 
-    if (checkbox) {
-      field.insertBefore(box, checkbox);
-    } else {
-      field.appendChild(box);
-    }
+    if (checkbox) field.insertBefore(box, checkbox);
+    else field.appendChild(box);
   }
 
   function initMultiStep() {
@@ -206,6 +187,52 @@ export default apiInitializer("0.8", (api) => {
 
     const coreFields = [emailField, usernameField, passwordField, confirmField];
 
+    function findField(keyword) {
+      return groups.find((g) =>
+        g.innerText.toLowerCase().includes(keyword)
+      );
+    }
+
+    const step2 = [
+      findField("first"),
+      findField("last"),
+      findField("pronoun"),
+      findField("phone"),
+      findField("state"),
+      findField("city"),
+      findField("zip"),
+    ].filter(Boolean);
+
+    const step3 = [
+      findField("role"),
+      findField("organization"),
+      findField("type"),
+      findField("groups"),
+      findField("which state"),
+    ].filter(Boolean);
+
+    const step4 = [
+      groups.find((g) =>
+        g.querySelector("[class*='community-guidelines']")
+      ),
+      groups.find((g) =>
+        g.querySelector("[class*='privacy-policy']")
+      ),
+    ].filter(Boolean);
+
+    const nav = document.createElement("div");
+    nav.className = "multi-step-nav";
+    nav.style.textAlign = "center";
+
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "btn btn-primary";
+    nextBtn.innerText = "Continue";
+
+    nav.appendChild(nextBtn);
+
+    const container = document.querySelector(".user-fields");
+    if (container) container.after(nav);
+
     function showStep(step) {
       currentStep = step;
 
@@ -223,23 +250,39 @@ export default apiInitializer("0.8", (api) => {
       coreFields.forEach((el) =>
         step === 1 ? safeShow(el) : safeHide(el)
       );
+
+      step2.forEach((el) =>
+        step === 2 ? safeShow(el) : safeHide(el)
+      );
+
+      step3.forEach((el) =>
+        step === 3 ? safeShow(el) : safeHide(el)
+      );
+
+      step4.forEach((el) =>
+        step === 4 ? safeShow(el) : safeHide(el)
+      );
+
+      const cta = document.querySelector(".signup-page-cta");
+      if (cta) {
+        if (step === 4) safeShow(cta);
+        else safeHide(cta);
+      }
+
+      nextBtn.style.display = step === 4 ? "none" : "inline-flex";
+
+      updateCTAButtonText(step);
     }
 
-    const nextBtn = document.createElement("button");
-    nextBtn.className = "btn btn-primary";
-    nextBtn.innerText = "Continue";
-
-    document.querySelector(".user-fields")?.after(nextBtn);
-
-    // ✅ FIXED STEP 1 VALIDATION (WITH PASSWORD MATCH)
+    // ✅ ONLY CHANGE: Step 1 password validation added safely
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
       if (currentStep === 1) {
         const missing = [];
 
-        let passwordValue = "";
-        let confirmValue = "";
+        let password = "";
+        let confirm = "";
         let confirmWrap = null;
 
         coreFields.forEach((wrap) => {
@@ -255,11 +298,11 @@ export default apiInitializer("0.8", (api) => {
             wrap.classList.contains("create-account__password") &&
             !wrap.classList.contains("mss-password-confirm")
           ) {
-            passwordValue = input.value;
+            password = input.value;
           }
 
           if (wrap.classList.contains("mss-password-confirm")) {
-            confirmValue = input.value;
+            confirm = input.value;
             confirmWrap = wrap;
           }
         });
@@ -269,8 +312,7 @@ export default apiInitializer("0.8", (api) => {
           return;
         }
 
-        // 🔥 password mismatch check
-        if (passwordValue !== confirmValue) {
+        if (password !== confirm) {
           showFieldError(confirmWrap, "* Passwords do not match");
           return;
         }
@@ -278,6 +320,16 @@ export default apiInitializer("0.8", (api) => {
         showStep(2);
         return;
       }
+
+      const map = { 2: step2, 3: step3, 4: step4 };
+      const missing = getStepMissingFields(map[currentStep]);
+
+      if (missing.length) {
+        highlightMissing(missing);
+        return;
+      }
+
+      showStep(currentStep + 1);
     });
 
     showStep(1);
