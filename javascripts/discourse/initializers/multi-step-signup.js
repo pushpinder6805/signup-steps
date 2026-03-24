@@ -80,153 +80,6 @@ export default apiInitializer("0.8", (api) => {
     });
   }
 
-  function hasSelectKitValue(group) {
-    const selectKit = group.querySelector(".select-kit");
-    if (!selectKit) return true;
-
-    const label = group.querySelector("label");
-    const fieldName = label ? label.textContent.trim() : "unknown";
-
-    const hiddenSelect = group.querySelector("select");
-    if (hiddenSelect && hiddenSelect.value && hiddenSelect.value !== "") {
-      console.log(`[Multi-Step] ${fieldName}: Found value in hidden select: "${hiddenSelect.value}"`);
-      return true;
-    }
-
-    const hasChoice = group.querySelector(".select-kit-header .choice, .formatted-selection .choice");
-    if (hasChoice) {
-      console.log(`[Multi-Step] ${fieldName}: Found choice element`);
-      return true;
-    }
-
-    const selectKitDetails = group.querySelector("details.select-kit");
-    if (selectKitDetails) {
-      const dataValue = selectKitDetails.dataset.value;
-      if (dataValue) {
-        console.log(`[Multi-Step] ${fieldName}: Found data-value: "${dataValue}"`);
-        return true;
-      }
-
-      const bodyId = selectKitDetails.id + "-body";
-      const body = document.getElementById(bodyId);
-      if (body) {
-        const checked = body.querySelector(".select-kit-row[aria-checked='true']");
-        if (checked) {
-          console.log(`[Multi-Step] ${fieldName}: Found checked row in body`);
-          return true;
-        }
-      }
-    }
-
-    const headerText = selectKit.querySelector(".select-kit-header .selected-name, .select-kit-header-wrapper .selected-name");
-    if (headerText && headerText.textContent.trim() && headerText.textContent.trim() !== "Select...") {
-      console.log(`[Multi-Step] ${fieldName}: Has selected text: "${headerText.textContent.trim()}"`);
-      return true;
-    }
-
-    const summary = selectKit.querySelector("summary");
-    if (summary) {
-      const summaryText = summary.textContent.trim();
-      if (summaryText && summaryText !== "Select..." && summaryText !== "") {
-        console.log(`[Multi-Step] ${fieldName}: Summary has text: "${summaryText}"`);
-        return true;
-      }
-    }
-
-    console.log(`[Multi-Step] ${fieldName}: No value detected`);
-    console.log(`[Multi-Step] ${fieldName}: HTML:`, selectKit.outerHTML.substring(0, 300));
-    return false;
-  }
-
-  function getVisibleRequiredFields(step, coreFields, page2Groups, page3Groups) {
-    const missing = [];
-
-    if (step === 1) {
-      coreFields.forEach((fieldWrap) => {
-        const input = fieldWrap.querySelector("input");
-        if (input && input.required && !input.value.trim()) {
-          missing.push(input);
-        }
-      });
-    }
-
-    if (step === 2) {
-      page2Groups.forEach((group) => {
-        if (group.style.display === "none") return;
-
-        const label = group.querySelector("label");
-        const isRequired = label && label.textContent.includes("*");
-        const fieldName = label ? label.textContent.trim() : "unknown";
-
-        if (!isRequired) return;
-
-        const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], textarea");
-        const select = group.querySelector("select");
-        const selectKit = group.querySelector(".select-kit");
-
-        console.log(`[Multi-Step] Checking ${fieldName}:`, {
-          hasInput: !!input,
-          hasSelect: !!select,
-          hasSelectKit: !!selectKit
-        });
-
-        if (input && !input.value.trim()) {
-          console.log(`[Multi-Step] ${fieldName}: Input is empty`);
-          missing.push(input);
-        } else if (select && (!select.value || select.value === "")) {
-          console.log(`[Multi-Step] ${fieldName}: Select is empty`);
-          missing.push(select);
-        } else if (selectKit && !hasSelectKitValue(group)) {
-          console.log(`[Multi-Step] ${fieldName}: SelectKit is empty`);
-          missing.push(selectKit);
-        }
-      });
-      console.log(`[Multi-Step] Step 2 missing fields:`, missing.length);
-    }
-
-    if (step === 3) {
-      page3Groups.forEach((group) => {
-        if (group.style.display === "none") return;
-
-        const label = group.querySelector("label");
-        const isRequired = label && label.textContent.includes("*");
-
-        if (!isRequired) return;
-
-        const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], textarea");
-        const select = group.querySelector("select");
-        const selectKit = group.querySelector(".select-kit");
-        const checkbox = group.querySelector("input[type=checkbox]");
-
-        if (input && !input.value.trim()) {
-          missing.push(input);
-        } else if (select && (!select.value || select.value === "")) {
-          missing.push(select);
-        } else if (selectKit && !hasSelectKitValue(group)) {
-          missing.push(selectKit);
-        } else if (checkbox && !checkbox.checked) {
-          missing.push(checkbox);
-        }
-      });
-    }
-
-    return missing;
-  }
-
-  function highlightMissing(inputs) {
-    inputs.forEach((input) => {
-      input.style.outline = "2px solid var(--danger, #c00)";
-      input.style.borderRadius = "4px";
-      const clearOutline = () => {
-        input.style.outline = "";
-        input.removeEventListener("input", clearOutline);
-        input.removeEventListener("change", clearOutline);
-      };
-      input.addEventListener("input", clearOutline);
-      input.addEventListener("change", clearOutline);
-    });
-    if (inputs.length) inputs[0].focus();
-  }
 
   function initMultiStep() {
     if (initialized) return;
@@ -610,66 +463,6 @@ export default apiInitializer("0.8", (api) => {
       userFieldsEl.after(nav);
     }
 
-    function checkStep1Validation() {
-      const missing = getVisibleRequiredFields(1, coreFields, page2Groups, page3Groups);
-      const matchNotice = passwordConfirmField ? passwordConfirmField.querySelector(".mss-password-match-notice") : null;
-
-      if (currentStep === 1 && passwordConfirmField) {
-        const passwordInput = passwordField.querySelector("input");
-        const confirmInput = passwordConfirmField.querySelector("input");
-
-        if (passwordInput && confirmInput && matchNotice) {
-          if (confirmInput.value === "") {
-            matchNotice.style.display = "none";
-          } else if (passwordInput.value !== confirmInput.value) {
-            matchNotice.style.display = "block";
-            matchNotice.style.color = "#c00";
-            matchNotice.textContent = "Passwords do not match";
-            nextBtn.disabled = true;
-            nextBtn.style.background = "#ccc";
-            nextBtn.style.cursor = "not-allowed";
-            return;
-          } else {
-            matchNotice.style.display = "block";
-            matchNotice.style.color = "#28a745";
-            matchNotice.textContent = "Passwords match";
-          }
-        }
-
-        if (passwordInput && confirmInput) {
-          if (!passwordInput.value || !confirmInput.value || passwordInput.value !== confirmInput.value) {
-            nextBtn.disabled = true;
-            nextBtn.style.background = "#ccc";
-            nextBtn.style.cursor = "not-allowed";
-            return;
-          }
-        }
-      }
-
-      if (missing.length === 0) {
-        nextBtn.disabled = false;
-        nextBtn.style.background = "#28a745";
-        nextBtn.style.cursor = "pointer";
-      } else {
-        nextBtn.disabled = true;
-        nextBtn.style.background = "#ccc";
-        nextBtn.style.cursor = "not-allowed";
-      }
-    }
-
-    function checkStep2Validation() {
-      const missing = getVisibleRequiredFields(2, coreFields, page2Groups, page3Groups);
-
-      if (missing.length === 0) {
-        nextBtn.disabled = false;
-        nextBtn.style.background = "#28a745";
-        nextBtn.style.cursor = "pointer";
-      } else {
-        nextBtn.disabled = true;
-        nextBtn.style.background = "#ccc";
-        nextBtn.style.cursor = "not-allowed";
-      }
-    }
 
     function showStep(step) {
       currentStep = step;
@@ -723,130 +516,11 @@ export default apiInitializer("0.8", (api) => {
       }
 
       updateProgressBar(segments, step);
-
-      if (step === 1) {
-        checkStep1Validation();
-      } else if (step === 2) {
-        checkStep2Validation();
-      } else if (step === 3) {
-        checkStep3Validation();
-      }
     }
-
-    coreFields.forEach((fieldWrap) => {
-      const input = fieldWrap.querySelector("input");
-      if (input) {
-        input.addEventListener("input", () => {
-          if (currentStep === 1) {
-            checkStep1Validation();
-          }
-        });
-      }
-    });
-
-    page2Groups.forEach((group) => {
-      const input = group.querySelector("input, select, textarea");
-      if (input) {
-        input.addEventListener("input", () => {
-          if (currentStep === 2) {
-            checkStep2Validation();
-          }
-        });
-        input.addEventListener("change", () => {
-          if (currentStep === 2) {
-            checkStep2Validation();
-          }
-        });
-      }
-
-      const selectKit = group.querySelector(".select-kit");
-      if (selectKit) {
-        const observer = new MutationObserver(() => {
-          if (currentStep === 2) {
-            checkStep2Validation();
-          }
-        });
-        observer.observe(selectKit, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ["aria-checked"],
-        });
-      }
-    });
-
-    function checkStep3Validation() {
-      const missing = getVisibleRequiredFields(3, coreFields, page2Groups, page3Groups);
-      completeBtn.disabled = missing.length > 0;
-    }
-
-    page3Groups.forEach((group) => {
-      const input = group.querySelector("input, select, textarea");
-      if (input) {
-        input.addEventListener("input", () => {
-          if (currentStep === 3) {
-            checkStep3Validation();
-          }
-        });
-        input.addEventListener("change", () => {
-          if (currentStep === 3) {
-            checkStep3Validation();
-          }
-        });
-      }
-
-      const selectKit = group.querySelector(".select-kit");
-      if (selectKit) {
-        const observer = new MutationObserver(() => {
-          if (currentStep === 3) {
-            checkStep3Validation();
-          }
-        });
-        observer.observe(selectKit, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ["aria-checked"],
-        });
-      }
-    });
 
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-
-      if (nextBtn.disabled) {
-        return;
-      }
-
-      const missing = getVisibleRequiredFields(
-        currentStep,
-        coreFields,
-        page2Groups,
-        page3Groups
-      );
-
-      if (missing.length) {
-        highlightMissing(missing);
-        return;
-      }
-
-      if (currentStep === 1 && passwordConfirmField) {
-        const passwordInput = passwordField.querySelector("input");
-        const confirmInput = passwordConfirmField.querySelector("input");
-        if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
-          confirmInput.style.outline = "2px solid var(--danger, #c00)";
-          confirmInput.style.borderRadius = "4px";
-          confirmInput.focus();
-          const clearOutline = () => {
-            confirmInput.style.outline = "";
-            confirmInput.removeEventListener("input", clearOutline);
-          };
-          confirmInput.addEventListener("input", clearOutline);
-          return;
-        }
-      }
-
       if (currentStep < totalSteps) showStep(currentStep + 1);
     });
 
@@ -860,90 +534,21 @@ export default apiInitializer("0.8", (api) => {
       e.preventDefault();
       e.stopPropagation();
 
-      console.log("[Multi-Step] Complete button clicked");
-
-      function showNotice(message) {
-        let noticeEl = document.querySelector(".mss-validation-notice");
-        if (noticeEl) {
-          noticeEl.remove();
-        }
-
-        noticeEl = document.createElement("div");
-        noticeEl.className = "mss-validation-notice";
-        noticeEl.textContent = message;
-        noticeEl.style.cssText = `
-          background: var(--danger-low, #ffe8e8);
-          color: var(--danger, #c00);
-          border: 1px solid var(--danger, #c00);
-          border-radius: 6px;
-          padding: 12px 16px;
-          margin-bottom: 16px;
-          font-size: 0.95em;
-          text-align: center;
-        `;
-        nav.before(noticeEl);
-
-        setTimeout(() => {
-          if (noticeEl && noticeEl.parentNode) {
-            noticeEl.style.transition = "opacity 0.3s";
-            noticeEl.style.opacity = "0";
-            setTimeout(() => noticeEl.remove(), 300);
-          }
-        }, 5000);
-      }
-
-      const missingPage3 = getVisibleRequiredFields(3, coreFields, page2Groups, page3Groups);
-      console.log("[Multi-Step] Missing page 3 fields:", missingPage3.length);
-
-      if (missingPage3.length) {
-        console.log("[Multi-Step] Validation failed on page 3");
-        highlightMissing(missingPage3);
-        showNotice("Please fill in all required fields before completing signup.");
-        return false;
-      }
-
-      const missingCore = getVisibleRequiredFields(1, coreFields, page2Groups, page3Groups);
-      const missingPage2 = getVisibleRequiredFields(2, coreFields, page2Groups, page3Groups);
-      console.log("[Multi-Step] Missing core fields:", missingCore.length, "Missing page 2:", missingPage2.length);
-
-      if (missingCore.length || missingPage2.length) {
-        console.log("[Multi-Step] Validation failed on previous pages");
-        showNotice("Please complete all previous pages. Some required fields are missing.");
-        return false;
-      }
-
-      const passwordInput = passwordField ? passwordField.querySelector("input") : null;
-      const confirmInput = passwordConfirmField ? passwordConfirmField.querySelector("input") : null;
-
-      if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
-        console.log("[Multi-Step] Password mismatch");
-        confirmInput.style.outline = "2px solid var(--danger, #c00)";
-        confirmInput.style.borderRadius = "4px";
-        showNotice("Passwords do not match.");
-        return false;
-      }
-
-      console.log("[Multi-Step] All validations passed, capturing state tags");
       captureStateTags();
 
       const actualSubmitBtn = document.querySelector(".sign-up-button") ||
                              document.querySelector('button[type="submit"]') ||
                              document.querySelector('.create-account button.btn-primary');
-      console.log("[Multi-Step] Submit button found:", !!actualSubmitBtn);
 
       if (actualSubmitBtn) {
-        console.log("[Multi-Step] Clicking submit button");
         actualSubmitBtn.click();
         return;
       }
 
       const form = document.querySelector(".create-account") ||
                    document.querySelector("form");
-      console.log("[Multi-Step] Form found:", !!form);
 
       if (form) {
-        console.log("[Multi-Step] Attempting form submission");
-
         try {
           if (form.requestSubmit) {
             form.requestSubmit();
@@ -951,14 +556,9 @@ export default apiInitializer("0.8", (api) => {
             form.submit();
           }
         } catch (error) {
-          console.error("[Multi-Step] Form submission error:", error);
-
           const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
           form.dispatchEvent(submitEvent);
         }
-      } else {
-        console.error("[Multi-Step] No submit button or form found!");
-        showNotice("Unable to submit form. Please refresh and try again.");
       }
     });
 
