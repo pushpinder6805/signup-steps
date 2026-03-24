@@ -54,7 +54,7 @@ export default apiInitializer("0.8", (api) => {
     if (error) error.remove();
   }
 
-  // ✅ validation (fixed for dropdowns)
+  // ✅ validation (fixed)
   function getStepMissingFields(stepContainers) {
     const missing = [];
 
@@ -105,7 +105,7 @@ export default apiInitializer("0.8", (api) => {
     return missing;
   }
 
-  // ✅ inline error UI (no red borders)
+  // ✅ inline error UI
   function highlightMissing(wrappers) {
     wrappers.forEach((wrap) => {
       const existing = wrap.querySelector(".field-error");
@@ -116,6 +116,7 @@ export default apiInitializer("0.8", (api) => {
       error.innerText = "* This is required";
 
       const controls = wrap.querySelector(".controls");
+
       if (controls) {
         controls.appendChild(error);
       } else {
@@ -282,15 +283,25 @@ export default apiInitializer("0.8", (api) => {
       updateCTAButtonText(step);
     }
 
+    // ✅ FIXED STEP 1 VALIDATION
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
       if (currentStep === 1) {
-        const inputs = coreFields.map(f => f.querySelector("input"));
-        const missing = inputs.filter(i => !i.value.trim());
+        const missing = [];
+
+        coreFields.forEach((wrap) => {
+          const input = wrap.querySelector("input");
+
+          if (!input || !input.value.trim()) {
+            missing.push(wrap);
+          } else {
+            clearFieldError(wrap);
+          }
+        });
 
         if (missing.length) {
-          highlightMissing(missing.map(i => i.closest(".input-group")));
+          highlightMissing(missing);
           return;
         }
 
@@ -307,6 +318,38 @@ export default apiInitializer("0.8", (api) => {
       }
 
       showStep(currentStep + 1);
+    });
+
+    // ✅ REALTIME ERROR REMOVAL
+    document.addEventListener("input", (e) => {
+      const wrap = e.target.closest(".input-group, .user-field");
+      if (!wrap) return;
+
+      if (e.target.value && e.target.value.trim() !== "") {
+        clearFieldError(wrap);
+      }
+    });
+
+    document.addEventListener("change", (e) => {
+      const wrap = e.target.closest(".input-group, .user-field");
+      if (!wrap) return;
+
+      // checkbox
+      if (e.target.type === "checkbox" && e.target.checked) {
+        clearFieldError(wrap);
+      }
+
+      // dropdown
+      const selectKit = wrap.querySelector(".select-kit");
+      if (selectKit) {
+        const header = selectKit.querySelector(".select-kit-header");
+        const value = header?.getAttribute("data-value");
+        const selectedChoices = selectKit.querySelectorAll(".selected-choice");
+
+        if ((value && value.trim() !== "") || selectedChoices.length > 0) {
+          clearFieldError(wrap);
+        }
+      }
     });
 
     showStep(1);
