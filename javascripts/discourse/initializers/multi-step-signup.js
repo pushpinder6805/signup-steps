@@ -26,7 +26,6 @@ export default apiInitializer("0.8", (api) => {
     label.textContent = step === 4 ? "Complete Sign Up" : "Sign Up";
   }
 
-  // ✅ PROGRESS BAR FIX
   function updateProgressBar(step) {
     const segments = document.querySelectorAll(".signup-progress-bar__segment");
 
@@ -35,13 +34,9 @@ export default apiInitializer("0.8", (api) => {
 
       seg.classList.remove("--active", "--complete", "--incomplete");
 
-      if (stepNum < step) {
-        seg.classList.add("--complete");
-      } else if (stepNum === step) {
-        seg.classList.add("--active");
-      } else {
-        seg.classList.add("--incomplete");
-      }
+      if (stepNum < step) seg.classList.add("--complete");
+      else if (stepNum === step) seg.classList.add("--active");
+      else seg.classList.add("--incomplete");
     });
   }
 
@@ -78,7 +73,6 @@ export default apiInitializer("0.8", (api) => {
       });
 
       const selectKit = wrap.querySelector(".select-kit");
-
       if (selectKit) {
         const selected =
           selectKit.querySelector(".selected-name") ||
@@ -103,6 +97,43 @@ export default apiInitializer("0.8", (api) => {
     }
   }
 
+  // ✅ POLICY BOX INJECTION
+  function injectPolicyBox() {
+    const field = document.querySelector(
+      ".user-field-community-guidelines .controls"
+    );
+
+    if (!field) return;
+
+    // prevent duplicate
+    if (field.querySelector(".policy-box")) return;
+
+    const box = document.createElement("div");
+    box.className = "policy-box";
+
+    box.innerHTML = `
+      <div class="policy-content">
+        <strong>Community Guidelines</strong><br><br>
+        Please read the following carefully before proceeding.<br><br>
+
+        1. Respect all members.<br>
+        2. No spam or self-promotion.<br>
+        3. Follow platform rules.<br>
+        4. Maintain professionalism.<br><br>
+
+        By continuing, you agree to comply with all rules and policies.
+      </div>
+    `;
+
+    const checkbox = field.querySelector(".checkbox-label");
+
+    if (checkbox) {
+      field.insertBefore(box, checkbox);
+    } else {
+      field.appendChild(box);
+    }
+  }
+
   function initMultiStep() {
     if (initialized) return;
 
@@ -122,10 +153,8 @@ export default apiInitializer("0.8", (api) => {
     if (!confirmField && passwordField) {
       confirmField = document.createElement("div");
       confirmField.className = "create-account__password mss-password-confirm";
-
       confirmField.innerHTML =
         "<label>Re-enter Password*</label><input type='password' required />";
-
       passwordField.after(confirmField);
     }
 
@@ -183,9 +212,13 @@ export default apiInitializer("0.8", (api) => {
       if (step === 1) setHeading("Create your Account");
       if (step === 2) setHeading("Enter Your Details");
       if (step === 3) setHeading("About Your Organization");
-      if (step === 4) setHeading("Participation Agreement");
+      if (step === 4) {
+        setHeading("Participation Agreement");
 
-      // ✅ update progress
+        // 🔥 Inject policy box when step 4 loads
+        setTimeout(injectPolicyBox, 100);
+      }
+
       updateProgressBar(step);
 
       coreFields.forEach((el) =>
