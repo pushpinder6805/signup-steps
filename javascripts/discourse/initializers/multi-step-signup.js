@@ -95,18 +95,26 @@ export default apiInitializer("0.8", (api) => {
     }
   }
 
-  // ✅ POLICY BOX (FROM SETTINGS)
-  function injectPolicyBox() {
-    const field = document.querySelector(
-      ".user-field-community-guidelines .controls"
+  // ✅ MULTIPLE POLICY BOXES
+  function injectPolicyBoxes() {
+    injectSinglePolicy(
+      ".user-field-community-guidelines",
+      settings.community_guidelines_text
     );
 
+    injectSinglePolicy(
+      ".user-field-privacy-policy",
+      settings.privacy_policy_text
+    );
+  }
+
+  function injectSinglePolicy(selector, text) {
+    const field = document.querySelector(`${selector} .controls`);
     if (!field) return;
+
     if (field.querySelector(".policy-box")) return;
 
-    const text = settings.community_guidelines_text || "";
-
-    const formattedText = text
+    const formattedText = (text || "")
       .replace(/\n/g, "<br>")
       .replace(/\.\s/g, ".<br><br>");
 
@@ -210,8 +218,8 @@ export default apiInitializer("0.8", (api) => {
       if (step === 4) {
         setHeading("Participation Agreement");
 
-        // inject policy box
-        setTimeout(injectPolicyBox, 100);
+        // 🔥 inject BOTH boxes
+        setTimeout(injectPolicyBoxes, 100);
       }
 
       updateProgressBar(step);
