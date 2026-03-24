@@ -84,19 +84,57 @@ export default apiInitializer("0.8", (api) => {
     const selectKit = group.querySelector(".select-kit");
     if (!selectKit) return true;
 
+    const label = group.querySelector("label");
+    const fieldName = label ? label.textContent.trim() : "unknown";
+
+    const hiddenSelect = group.querySelector("select");
+    if (hiddenSelect && hiddenSelect.value && hiddenSelect.value !== "") {
+      console.log(`[Multi-Step] ${fieldName}: Found value in hidden select: "${hiddenSelect.value}"`);
+      return true;
+    }
+
     const hasChoice = group.querySelector(".select-kit-header .choice, .formatted-selection .choice");
-    if (hasChoice) return true;
+    if (hasChoice) {
+      console.log(`[Multi-Step] ${fieldName}: Found choice element`);
+      return true;
+    }
 
     const selectKitDetails = group.querySelector("details.select-kit");
     if (selectKitDetails) {
+      const dataValue = selectKitDetails.dataset.value;
+      if (dataValue) {
+        console.log(`[Multi-Step] ${fieldName}: Found data-value: "${dataValue}"`);
+        return true;
+      }
+
       const bodyId = selectKitDetails.id + "-body";
       const body = document.getElementById(bodyId);
       if (body) {
         const checked = body.querySelector(".select-kit-row[aria-checked='true']");
-        if (checked) return true;
+        if (checked) {
+          console.log(`[Multi-Step] ${fieldName}: Found checked row in body`);
+          return true;
+        }
       }
     }
 
+    const headerText = selectKit.querySelector(".select-kit-header .selected-name, .select-kit-header-wrapper .selected-name");
+    if (headerText && headerText.textContent.trim() && headerText.textContent.trim() !== "Select...") {
+      console.log(`[Multi-Step] ${fieldName}: Has selected text: "${headerText.textContent.trim()}"`);
+      return true;
+    }
+
+    const summary = selectKit.querySelector("summary");
+    if (summary) {
+      const summaryText = summary.textContent.trim();
+      if (summaryText && summaryText !== "Select..." && summaryText !== "") {
+        console.log(`[Multi-Step] ${fieldName}: Summary has text: "${summaryText}"`);
+        return true;
+      }
+    }
+
+    console.log(`[Multi-Step] ${fieldName}: No value detected`);
+    console.log(`[Multi-Step] ${fieldName}: HTML:`, selectKit.outerHTML.substring(0, 300));
     return false;
   }
 
@@ -118,6 +156,7 @@ export default apiInitializer("0.8", (api) => {
 
         const label = group.querySelector("label");
         const isRequired = label && label.textContent.includes("*");
+        const fieldName = label ? label.textContent.trim() : "unknown";
 
         if (!isRequired) return;
 
@@ -125,14 +164,24 @@ export default apiInitializer("0.8", (api) => {
         const select = group.querySelector("select");
         const selectKit = group.querySelector(".select-kit");
 
+        console.log(`[Multi-Step] Checking ${fieldName}:`, {
+          hasInput: !!input,
+          hasSelect: !!select,
+          hasSelectKit: !!selectKit
+        });
+
         if (input && !input.value.trim()) {
+          console.log(`[Multi-Step] ${fieldName}: Input is empty`);
           missing.push(input);
         } else if (select && (!select.value || select.value === "")) {
+          console.log(`[Multi-Step] ${fieldName}: Select is empty`);
           missing.push(select);
         } else if (selectKit && !hasSelectKitValue(group)) {
+          console.log(`[Multi-Step] ${fieldName}: SelectKit is empty`);
           missing.push(selectKit);
         }
       });
+      console.log(`[Multi-Step] Step 2 missing fields:`, missing.length);
     }
 
     if (step === 3) {
