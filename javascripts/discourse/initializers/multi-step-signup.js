@@ -34,20 +34,6 @@ export default apiInitializer("0.8", (api) => {
     if (cta) cta.style.display = "";
   }
 
-  // ✅ ONLY text change
-  function updateCTAButtonText(step) {
-    const label = document.querySelector(
-      ".signup-page-cta__signup .d-button-label"
-    );
-    if (!label) return;
-
-    if (step === 4) {
-      label.textContent = "Complete Sign Up";
-    } else {
-      label.textContent = "Sign Up";
-    }
-  }
-
   function cleanup() {
     initialized = false;
 
@@ -164,6 +150,7 @@ export default apiInitializer("0.8", (api) => {
       confirmField,
     ];
 
+    // -------- FIELD DETECTION --------
     function findField(keyword) {
       return groups.find((g) =>
         g.innerText.toLowerCase().includes(keyword)
@@ -225,8 +212,6 @@ export default apiInitializer("0.8", (api) => {
       } else {
         cta.style.display = "none";
       }
-
-      updateCTAButtonText(currentStep);
     });
 
     observer.observe(document.body, {
@@ -263,8 +248,6 @@ export default apiInitializer("0.8", (api) => {
       else hideButtons();
 
       nextBtn.style.display = step === 4 ? "none" : "inline-flex";
-
-      updateCTAButtonText(step);
     }
 
     // -------- EVENTS --------
