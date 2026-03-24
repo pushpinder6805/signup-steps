@@ -1,3 +1,19 @@
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.password-wrapper .toggle-password-mask {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .create-account__password .toggle-password-mask {
     margin-top: 45px !important;
 }
