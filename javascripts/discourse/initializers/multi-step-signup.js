@@ -3,6 +3,7 @@ import { apiInitializer } from "discourse/lib/api";
 export default apiInitializer("0.8", (api) => {
   let initialized = false;
   let observer = null;
+  let currentStep = 1;
 
   function safeHide(el) {
     if (!el) return;
@@ -19,35 +20,38 @@ export default apiInitializer("0.8", (api) => {
   }
 
   function setHeading(text) {
-    let heading = document.querySelector(".mss-heading");
-
-    if (!heading) {
-      heading = document.createElement("h2");
-      heading.className = "mss-heading";
-      heading.style.textAlign = "center";
-      heading.style.marginBottom = "20px";
-
-      const form = document.querySelector(".create-account");
-      if (form) form.prepend(heading);
+    const heading = document.querySelector("#create-account-title");
+    if (heading) {
+      heading.innerText = text;
     }
+  }
 
-    heading.innerText = text;
+  function hideButtons() {
+    const submitBtn = document.querySelector(".sign-up-button");
+    const cta = document.querySelector(".signup-page-cta");
+
+    if (submitBtn) submitBtn.style.display = "none";
+    if (cta) cta.style.display = "none";
+  }
+
+  function showButtons() {
+    const submitBtn = document.querySelector(".sign-up-button");
+    const cta = document.querySelector(".signup-page-cta");
+
+    if (submitBtn) submitBtn.style.display = "";
+    if (cta) cta.style.display = "none"; // keep CTA hidden permanently
   }
 
   function cleanup() {
     initialized = false;
 
     document.querySelectorAll(".multi-step-nav").forEach((el) => el.remove());
-    document.querySelectorAll(".mss-heading").forEach((el) => el.remove());
 
     document
       .querySelectorAll(
         ".user-fields .input-group, .create-account-email, .create-account__username, .create-account__password"
       )
       .forEach((el) => safeShow(el));
-
-    const submitBtn = document.querySelector(".sign-up-button");
-    if (submitBtn) submitBtn.style.display = "";
 
     if (observer) {
       observer.disconnect();
@@ -77,12 +81,10 @@ export default apiInitializer("0.8", (api) => {
   function highlightMissing(inputs) {
     inputs.forEach((input) => {
       input.style.outline = "2px solid red";
-
       const clear = () => {
         input.style.outline = "";
         input.removeEventListener("input", clear);
       };
-
       input.addEventListener("input", clear);
     });
 
@@ -95,12 +97,11 @@ export default apiInitializer("0.8", (api) => {
     const groups = Array.from(
       document.querySelectorAll(".user-fields .input-group")
     );
-
     if (!groups.length) return;
 
     initialized = true;
 
-    // ---------------- CORE ----------------
+    // -------- CORE --------
     const emailField = document.querySelector(".create-account-email");
     const usernameField = document.querySelector(".create-account__username");
     const passwordField = document.querySelector(".create-account__password");
@@ -127,7 +128,7 @@ export default apiInitializer("0.8", (api) => {
       confirmField,
     ];
 
-    // ---------------- FIELD DETECTION ----------------
+    // -------- FIELD DETECTION --------
     function findField(keyword) {
       return groups.find((g) =>
         g.innerText.toLowerCase().includes(keyword)
@@ -161,10 +162,9 @@ export default apiInitializer("0.8", (api) => {
       ),
     ].filter(Boolean);
 
-    let currentStep = 1;
     const totalSteps = 4;
 
-    // ---------------- NAV ----------------
+    // -------- NAV --------
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
     nav.style.display = "flex";
@@ -185,15 +185,10 @@ export default apiInitializer("0.8", (api) => {
     const container = document.querySelector(".user-fields");
     if (container) container.after(nav);
 
-    // ---------------- OBSERVER ----------------
+    // -------- OBSERVER --------
     observer = new MutationObserver(() => {
-      const submitBtn = document.querySelector(".sign-up-button");
-      if (!submitBtn) return;
-
       if (currentStep !== 4) {
-        submitBtn.style.display = "none";
-        submitBtn.style.visibility = "hidden";
-        submitBtn.style.pointerEvents = "none";
+        hideButtons();
       }
     });
 
@@ -202,15 +197,17 @@ export default apiInitializer("0.8", (api) => {
       subtree: true,
     });
 
-    // ---------------- STEP CONTROL ----------------
+    // -------- STEP CONTROL --------
     function showStep(step) {
       currentStep = step;
 
+      // headings
       if (step === 1) setHeading("Create your Account");
       if (step === 2) setHeading("Enter Your Details");
       if (step === 3) setHeading("About Your Organization");
       if (step === 4) setHeading("Participation Agreement");
 
+      // fields
       coreFields.forEach((el) =>
         step === 1 ? safeShow(el) : safeHide(el)
       );
@@ -227,27 +224,18 @@ export default apiInitializer("0.8", (api) => {
         step === 4 ? safeShow(el) : safeHide(el)
       );
 
-      const submitBtn = document.querySelector(".sign-up-button");
-
-      if (submitBtn) {
-        if (step === 4) {
-          submitBtn.style.display = "";
-          submitBtn.style.visibility = "";
-          submitBtn.style.pointerEvents = "";
-        } else {
-          submitBtn.style.display = "none";
-          submitBtn.style.visibility = "hidden";
-          submitBtn.style.pointerEvents = "none";
-        }
-
-        submitBtn.disabled = false;
+      // buttons
+      if (step === 4) {
+        showButtons();
+      } else {
+        hideButtons();
       }
 
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
       nextBtn.style.display = step === 4 ? "none" : "inline-flex";
     }
 
-    // ---------------- EVENTS ----------------
+    // -------- EVENTS --------
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
@@ -260,7 +248,7 @@ export default apiInitializer("0.8", (api) => {
 
       const missing = getRequiredInputs(fields);
 
-      // password match check
+      // password match
       if (currentStep === 1) {
         const pass = passwordField.querySelector("input")?.value;
         const confirm =
@@ -284,9 +272,7 @@ export default apiInitializer("0.8", (api) => {
 
     backBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      if (currentStep > 1) {
-        showStep(currentStep - 1);
-      }
+      if (currentStep > 1) showStep(currentStep - 1);
     });
 
     showStep(1);
