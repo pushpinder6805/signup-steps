@@ -19,8 +19,11 @@ export default apiInitializer("0.8", (api) => {
     document.querySelectorAll(".signup-progress-bar").forEach((el) => {
       el.style.display = "";
     });
-    const submitBtn = document.querySelector(".sign-up-button");
-    if (submitBtn) submitBtn.style.display = "";
+    document.querySelectorAll(".sign-up-button").forEach((btn) => {
+      btn.style.display = "";
+      btn.disabled = false;
+      btn.removeAttribute("disabled");
+    });
     const signupCta = document.querySelector(".signup-page-cta");
     if (signupCta) signupCta.style.display = "";
   }
@@ -481,10 +484,11 @@ export default apiInitializer("0.8", (api) => {
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
       nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
 
-      const submitBtn = document.querySelector(".sign-up-button");
-      if (submitBtn) {
-        submitBtn.style.display = step === totalSteps ? "" : "none";
-      }
+      document.querySelectorAll(".sign-up-button").forEach((btn) => {
+        btn.style.display = step === totalSteps ? "" : "none";
+        btn.disabled = false;
+        btn.removeAttribute("disabled");
+      });
 
       updateProgressBar(segments, step);
     }
