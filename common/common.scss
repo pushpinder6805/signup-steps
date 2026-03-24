@@ -165,7 +165,8 @@
 
 .mss-step-1,
 .mss-step-2,
-.mss-step-3 {
+.mss-step-3,
+.mss-step-4 {
   display: none;
 }
 
@@ -178,6 +179,10 @@
 }
 
 .mss-on-step-3 .mss-step-3 {
+  display: block;
+}
+
+.mss-on-step-4 .mss-step-4 {
   display: block;
 }
 

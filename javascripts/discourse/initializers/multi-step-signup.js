@@ -6,14 +6,21 @@ export default apiInitializer("0.8", (api) => {
 
   function cleanup() {
     initialized = false;
-    document.body.classList.remove("mss-on-step-1", "mss-on-step-2", "mss-on-step-3");
+    document.body.classList.remove(
+      "mss-on-step-1",
+      "mss-on-step-2",
+      "mss-on-step-3",
+      "mss-on-step-4"
+    );
     document
-      .querySelectorAll(".multi-step-nav, .mss-progress-bar-wrap, .mss-legal-text-box, .mss-required-text, .create-account__password-confirm")
+      .querySelectorAll(
+        ".multi-step-nav, .mss-progress-bar-wrap, .mss-legal-text-box, .mss-required-text, .create-account__password-confirm"
+      )
       .forEach((el) => el.remove());
     document
-      .querySelectorAll(".mss-step-1, .mss-step-2, .mss-step-3")
+      .querySelectorAll(".mss-step-1, .mss-step-2, .mss-step-3, .mss-step-4")
       .forEach((el) => {
-        el.classList.remove("mss-step-1", "mss-step-2", "mss-step-3");
+        el.classList.remove("mss-step-1", "mss-step-2", "mss-step-3", "mss-step-4");
       });
   }
 
@@ -66,7 +73,6 @@ export default apiInitializer("0.8", (api) => {
     });
   }
 
-
   function initMultiStep() {
     if (initialized) return;
 
@@ -79,19 +85,29 @@ export default apiInitializer("0.8", (api) => {
 
     function getGuidelinesText() {
       const val = settings && settings.community_guidelines_text;
-      return (val && String(val).trim()) || "Please read our community guidelines carefully before proceeding.";
+      return (
+        (val && String(val).trim()) ||
+        "Please read our community guidelines carefully before proceeding."
+      );
     }
 
     function getPrivacyText() {
       const val = settings && settings.privacy_policy_text;
-      return (val && String(val).trim()) || "Please read our privacy policy carefully before proceeding.";
+      return (
+        (val && String(val).trim()) ||
+        "Please read our privacy policy carefully before proceeding."
+      );
     }
 
-    const page2Groups = groups.slice(0, 12);
-    const page3Groups = groups.slice(12);
+    // Step 2: first 7 user-fields (Enter Your Details)
+    const page2Groups = groups.slice(0, 7);
+    // Step 3: next 5 user-fields (About Your Organization)
+    const page3Groups = groups.slice(7, 12);
+    // Step 4: remaining user-fields (Participation Agreement)
+    const page4Groups = groups.slice(12);
 
     let currentStep = 1;
-    const totalSteps = 3;
+    const totalSteps = 4;
 
     const coreFields = Array.from(
       document.querySelectorAll(
@@ -104,7 +120,8 @@ export default apiInitializer("0.8", (api) => {
 
     if (passwordField) {
       passwordConfirmField = document.createElement("div");
-      passwordConfirmField.className = "create-account__password create-account__password-confirm";
+      passwordConfirmField.className =
+        "create-account__password create-account__password-confirm";
 
       const label = document.createElement("label");
       label.textContent = "Re-enter Password*";
@@ -160,31 +177,30 @@ export default apiInitializer("0.8", (api) => {
       coreFields.push(passwordConfirmField);
     }
 
-
     const guidelinesTextBox = buildTextBox(getGuidelinesText());
     const privacyTextBox = buildTextBox(getPrivacyText());
 
     const userFieldsContainer = document.querySelector(".user-fields");
 
-    const guidelinesField = page3Groups.find((g) =>
+    const guidelinesField = page4Groups.find((g) =>
       g.querySelector("[class*='user-field-community-guidelines']")
     );
-    const privacyField = page3Groups.find((g) =>
+    const privacyField = page4Groups.find((g) =>
       g.querySelector("[class*='user-field-privacy-policy']")
     );
 
     if (guidelinesField) {
       guidelinesField.before(guidelinesTextBox);
-    } else if (page3Groups.length && page3Groups[0].parentNode) {
-      page3Groups[0].parentNode.insertBefore(guidelinesTextBox, page3Groups[0]);
+    } else if (page4Groups.length && page4Groups[0].parentNode) {
+      page4Groups[0].parentNode.insertBefore(guidelinesTextBox, page4Groups[0]);
     } else if (userFieldsContainer) {
       userFieldsContainer.appendChild(guidelinesTextBox);
     }
 
     if (privacyField) {
       privacyField.before(privacyTextBox);
-    } else if (page3Groups.length > 1 && page3Groups[1].parentNode) {
-      page3Groups[1].parentNode.insertBefore(privacyTextBox, page3Groups[1]);
+    } else if (page4Groups.length > 1 && page4Groups[1].parentNode) {
+      page4Groups[1].parentNode.insertBefore(privacyTextBox, page4Groups[1]);
     } else if (guidelinesTextBox.parentNode) {
       guidelinesTextBox.parentNode.appendChild(privacyTextBox);
     } else if (userFieldsContainer) {
@@ -259,9 +275,13 @@ export default apiInitializer("0.8", (api) => {
       signupCta.style.display = "none";
     }
 
-    document.querySelectorAll(".login-welcome-header .tip, .login-welcome-header + .tip").forEach((el) => {
-      el.style.display = "none";
-    });
+    document
+      .querySelectorAll(
+        ".login-welcome-header .tip, .login-welcome-header + .tip"
+      )
+      .forEach((el) => {
+        el.style.display = "none";
+      });
 
     if (userFieldsEl) {
       userFieldsEl.after(nav);
@@ -270,6 +290,7 @@ export default apiInitializer("0.8", (api) => {
     coreFields.forEach((f) => f.classList.add("mss-step-1"));
     page2Groups.forEach((g) => g.classList.add("mss-step-2"));
     page3Groups.forEach((g) => g.classList.add("mss-step-3"));
+    page4Groups.forEach((g) => g.classList.add("mss-step-4"));
 
     function showStep(step) {
       currentStep = step;
@@ -277,18 +298,25 @@ export default apiInitializer("0.8", (api) => {
       const heading = document.querySelector("#create-account-title");
       if (heading) {
         if (step === 1) {
-          heading.textContent = "Create your account";
+          heading.textContent = "Create your Account";
         } else if (step === 2) {
           heading.textContent = "Enter Your Details";
         } else if (step === 3) {
+          heading.textContent = "About Your Organization";
+        } else if (step === 4) {
           heading.textContent = "Participation Agreement";
         }
       }
 
-      document.body.classList.remove("mss-on-step-1", "mss-on-step-2", "mss-on-step-3");
+      document.body.classList.remove(
+        "mss-on-step-1",
+        "mss-on-step-2",
+        "mss-on-step-3",
+        "mss-on-step-4"
+      );
       document.body.classList.add(`mss-on-step-${step}`);
 
-      if (step === 3) {
+      if (step === 4) {
         guidelinesTextBox.textContent = getGuidelinesText();
         privacyTextBox.textContent = getPrivacyText();
         guidelinesTextBox.classList.remove("mss-hidden");
@@ -323,17 +351,19 @@ export default apiInitializer("0.8", (api) => {
 
       captureStateTags();
 
-      const actualSubmitBtn = document.querySelector(".sign-up-button") ||
-                             document.querySelector('button[type="submit"]') ||
-                             document.querySelector('.create-account button.btn-primary');
+      const actualSubmitBtn =
+        document.querySelector(".sign-up-button") ||
+        document.querySelector('button[type="submit"]') ||
+        document.querySelector(".create-account button.btn-primary");
 
       if (actualSubmitBtn) {
         actualSubmitBtn.click();
         return;
       }
 
-      const form = document.querySelector(".create-account") ||
-                   document.querySelector("form");
+      const form =
+        document.querySelector(".create-account") ||
+        document.querySelector("form");
 
       if (form) {
         try {
@@ -343,7 +373,10 @@ export default apiInitializer("0.8", (api) => {
             form.submit();
           }
         } catch (error) {
-          const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+          const submitEvent = new Event("submit", {
+            bubbles: true,
+            cancelable: true,
+          });
           form.dispatchEvent(submitEvent);
         }
       }
@@ -372,17 +405,19 @@ export default apiInitializer("0.8", (api) => {
       }
     }
 
-    stateField.querySelectorAll(
-      ".select-kit-header .choice, .multi-select-header .choice, .formatted-selection .choice, .choices .choice"
-    ).forEach((choice) => {
-      const val = choice.dataset.value || choice.dataset.name;
-      if (val) {
-        addTag(val);
-      } else {
-        const nameEl = choice.querySelector(".name");
-        if (nameEl) addTag(nameEl.textContent);
-      }
-    });
+    stateField
+      .querySelectorAll(
+        ".select-kit-header .choice, .multi-select-header .choice, .formatted-selection .choice, .choices .choice"
+      )
+      .forEach((choice) => {
+        const val = choice.dataset.value || choice.dataset.name;
+        if (val) {
+          addTag(val);
+        } else {
+          const nameEl = choice.querySelector(".name");
+          if (nameEl) addTag(nameEl.textContent);
+        }
+      });
 
     if (!tags.length) {
       stateField.querySelectorAll("[data-value]").forEach((el) => {
@@ -397,9 +432,11 @@ export default apiInitializer("0.8", (api) => {
         const bodyId = selectKit.id + "-body";
         const body = document.getElementById(bodyId);
         const searchTarget = body || stateField;
-        searchTarget.querySelectorAll(".select-kit-row[aria-checked='true']").forEach((row) => {
-          addTag(row.dataset.value || row.dataset.name);
-        });
+        searchTarget
+          .querySelectorAll(".select-kit-row[aria-checked='true']")
+          .forEach((row) => {
+            addTag(row.dataset.value || row.dataset.name);
+          });
       }
     }
 
@@ -435,7 +472,9 @@ export default apiInitializer("0.8", (api) => {
         await ajax(`/tag/${encodeURIComponent(tag)}/notifications`, {
           type: "PUT",
           contentType: "application/json",
-          data: JSON.stringify({ tag_notification: { notification_level: 3 } }),
+          data: JSON.stringify({
+            tag_notification: { notification_level: 3 },
+          }),
         });
       } catch (_) {}
     }
