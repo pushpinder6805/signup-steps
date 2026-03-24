@@ -493,7 +493,7 @@ export default apiInitializer("0.8", (api) => {
         } else if (step === 2) {
           heading.textContent = "Enter Your Details";
         } else if (step === 3) {
-          heading.textContent = "Review & Accept";
+          heading.textContent = "Participation Agreement";
         }
       }
 
@@ -522,12 +522,15 @@ export default apiInitializer("0.8", (api) => {
         privacyTextBox.classList.add("mss-hidden");
       }
 
-      backBtn.style.display = (step === 1 || step === 2) ? "none" : "inline-flex";
+      backBtn.style.display = "none";
       nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
 
       const submitBtn = document.querySelector(".sign-up-button");
       if (submitBtn) {
         submitBtn.style.display = step === totalSteps ? "" : "none";
+        if (step === totalSteps) {
+          submitBtn.textContent = "Complete signup";
+        }
       }
 
       updateProgressBar(segments, step);
@@ -573,6 +576,56 @@ export default apiInitializer("0.8", (api) => {
       e.stopPropagation();
       if (currentStep > 1) showStep(currentStep - 1);
     });
+
+    const submitBtn = document.querySelector(".sign-up-button");
+    if (submitBtn) {
+      const originalSubmitHandler = submitBtn.onclick;
+
+      submitBtn.addEventListener("click", (e) => {
+        if (currentStep === totalSteps) {
+          const missing = getVisibleRequiredFields(
+            currentStep,
+            coreFields,
+            page2Groups,
+            page3Groups
+          );
+
+          if (missing.length) {
+            e.preventDefault();
+            e.stopPropagation();
+            highlightMissing(missing);
+
+            let noticeEl = document.querySelector(".mss-validation-notice");
+            if (!noticeEl) {
+              noticeEl = document.createElement("div");
+              noticeEl.className = "mss-validation-notice";
+              noticeEl.textContent = "Please fill in all required fields before completing signup.";
+              noticeEl.style.cssText = `
+                background: var(--danger-low, #ffe8e8);
+                color: var(--danger, #c00);
+                border: 1px solid var(--danger, #c00);
+                border-radius: 6px;
+                padding: 12px 16px;
+                margin-bottom: 16px;
+                font-size: 0.95em;
+                text-align: center;
+              `;
+              nav.before(noticeEl);
+
+              setTimeout(() => {
+                if (noticeEl && noticeEl.parentNode) {
+                  noticeEl.style.transition = "opacity 0.3s";
+                  noticeEl.style.opacity = "0";
+                  setTimeout(() => noticeEl.remove(), 300);
+                }
+              }, 5000);
+            }
+
+            return false;
+          }
+        }
+      }, true);
+    }
 
     showStep(1);
   }
