@@ -20,7 +20,13 @@ export default apiInitializer("0.8", (api) => {
       el.style.display = "";
     });
     const submitBtn = document.querySelector(".sign-up-button");
-    if (submitBtn) submitBtn.style.display = "";
+    if (submitBtn) {
+      submitBtn.style.display = "";
+      submitBtn.style.position = "";
+      submitBtn.style.left = "";
+      submitBtn.style.opacity = "";
+      submitBtn.style.pointerEvents = "";
+    }
     const signupCta = document.querySelector(".signup-page-cta");
     if (signupCta) signupCta.style.display = "";
   }
@@ -548,7 +554,10 @@ export default apiInitializer("0.8", (api) => {
 
       const submitBtn = document.querySelector(".sign-up-button");
       if (submitBtn) {
-        submitBtn.style.display = "none";
+        submitBtn.style.position = "absolute";
+        submitBtn.style.left = "-9999px";
+        submitBtn.style.opacity = "0";
+        submitBtn.style.pointerEvents = "none";
       }
 
       updateProgressBar(segments, step);
