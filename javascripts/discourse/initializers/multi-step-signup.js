@@ -211,10 +211,20 @@ export default apiInitializer("0.8", (api) => {
         input.type = input.type === "password" ? "text" : "password";
       });
 
+      const matchNotice = document.createElement("div");
+      matchNotice.className = "mss-password-match-notice";
+      matchNotice.style.cssText = `
+        margin-top: 8px;
+        font-size: 0.9em;
+        font-weight: 500;
+        display: none;
+      `;
+
       inputWrapper.appendChild(input);
       inputWrapper.appendChild(toggleBtn);
       passwordConfirmField.appendChild(label);
       passwordConfirmField.appendChild(inputWrapper);
+      passwordConfirmField.appendChild(matchNotice);
 
       passwordField.after(passwordConfirmField);
       coreFields.push(passwordConfirmField);
@@ -511,10 +521,30 @@ export default apiInitializer("0.8", (api) => {
 
     function checkStep1Validation() {
       const missing = getVisibleRequiredFields(1, coreFields, page2Groups, page3Groups);
+      const matchNotice = passwordConfirmField ? passwordConfirmField.querySelector(".mss-password-match-notice") : null;
 
       if (currentStep === 1 && passwordConfirmField) {
         const passwordInput = passwordField.querySelector("input");
         const confirmInput = passwordConfirmField.querySelector("input");
+
+        if (passwordInput && confirmInput && matchNotice) {
+          if (confirmInput.value === "") {
+            matchNotice.style.display = "none";
+          } else if (passwordInput.value !== confirmInput.value) {
+            matchNotice.style.display = "block";
+            matchNotice.style.color = "#c00";
+            matchNotice.textContent = "Passwords do not match";
+            nextBtn.disabled = true;
+            nextBtn.style.background = "#ccc";
+            nextBtn.style.cursor = "not-allowed";
+            return;
+          } else {
+            matchNotice.style.display = "block";
+            matchNotice.style.color = "#28a745";
+            matchNotice.textContent = "Passwords match";
+          }
+        }
+
         if (passwordInput && confirmInput) {
           if (!passwordInput.value || !confirmInput.value || passwordInput.value !== confirmInput.value) {
             nextBtn.disabled = true;
