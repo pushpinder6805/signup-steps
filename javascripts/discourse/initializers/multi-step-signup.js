@@ -437,8 +437,15 @@ export default apiInitializer("0.8", (api) => {
     nextBtn.className = "btn btn-primary";
     nextBtn.innerHTML = `Continue`;
 
+    const completeBtn = document.createElement("button");
+    completeBtn.type = "submit";
+    completeBtn.className = "btn btn-primary mss-complete-btn";
+    completeBtn.innerHTML = `Complete signup`;
+    completeBtn.style.display = "none";
+
     nav.appendChild(backBtn);
     nav.appendChild(nextBtn);
+    nav.appendChild(completeBtn);
 
     const userFieldsEl = document.querySelector(".user-fields");
     const formEl = document.querySelector(".create-account");
@@ -524,13 +531,11 @@ export default apiInitializer("0.8", (api) => {
 
       backBtn.style.display = "none";
       nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
+      completeBtn.style.display = step === totalSteps ? "inline-flex" : "none";
 
       const submitBtn = document.querySelector(".sign-up-button");
       if (submitBtn) {
-        submitBtn.style.display = step === totalSteps ? "" : "none";
-        if (step === totalSteps) {
-          submitBtn.textContent = "Complete signup";
-        }
+        submitBtn.style.display = "none";
       }
 
       updateProgressBar(segments, step);
@@ -577,55 +582,88 @@ export default apiInitializer("0.8", (api) => {
       if (currentStep > 1) showStep(currentStep - 1);
     });
 
-    const submitBtn = document.querySelector(".sign-up-button");
-    if (submitBtn) {
-      const originalSubmitHandler = submitBtn.onclick;
+    completeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-      submitBtn.addEventListener("click", (e) => {
-        if (currentStep === totalSteps) {
-          const missing = getVisibleRequiredFields(
-            currentStep,
-            coreFields,
-            page2Groups,
-            page3Groups
-          );
+      const missingCore = getVisibleRequiredFields(1, coreFields, page2Groups, page3Groups);
+      const missingPage2 = getVisibleRequiredFields(2, coreFields, page2Groups, page3Groups);
+      const missingPage3 = getVisibleRequiredFields(3, coreFields, page2Groups, page3Groups);
+      const allMissing = [...missingCore, ...missingPage2, ...missingPage3];
 
-          if (missing.length) {
-            e.preventDefault();
-            e.stopPropagation();
-            highlightMissing(missing);
+      if (allMissing.length) {
+        highlightMissing(allMissing);
 
-            let noticeEl = document.querySelector(".mss-validation-notice");
-            if (!noticeEl) {
-              noticeEl = document.createElement("div");
-              noticeEl.className = "mss-validation-notice";
-              noticeEl.textContent = "Please fill in all required fields before completing signup.";
-              noticeEl.style.cssText = `
-                background: var(--danger-low, #ffe8e8);
-                color: var(--danger, #c00);
-                border: 1px solid var(--danger, #c00);
-                border-radius: 6px;
-                padding: 12px 16px;
-                margin-bottom: 16px;
-                font-size: 0.95em;
-                text-align: center;
-              `;
-              nav.before(noticeEl);
+        let noticeEl = document.querySelector(".mss-validation-notice");
+        if (!noticeEl) {
+          noticeEl = document.createElement("div");
+          noticeEl.className = "mss-validation-notice";
+          noticeEl.textContent = "Please fill in all required fields before completing signup.";
+          noticeEl.style.cssText = `
+            background: var(--danger-low, #ffe8e8);
+            color: var(--danger, #c00);
+            border: 1px solid var(--danger, #c00);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 0.95em;
+            text-align: center;
+          `;
+          nav.before(noticeEl);
 
-              setTimeout(() => {
-                if (noticeEl && noticeEl.parentNode) {
-                  noticeEl.style.transition = "opacity 0.3s";
-                  noticeEl.style.opacity = "0";
-                  setTimeout(() => noticeEl.remove(), 300);
-                }
-              }, 5000);
+          setTimeout(() => {
+            if (noticeEl && noticeEl.parentNode) {
+              noticeEl.style.transition = "opacity 0.3s";
+              noticeEl.style.opacity = "0";
+              setTimeout(() => noticeEl.remove(), 300);
             }
-
-            return false;
-          }
+          }, 5000);
         }
-      }, true);
-    }
+
+        return false;
+      }
+
+      const passwordInput = passwordField.querySelector("input");
+      const confirmInput = passwordConfirmField ? passwordConfirmField.querySelector("input") : null;
+      if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
+        confirmInput.style.outline = "2px solid var(--danger, #c00)";
+        confirmInput.style.borderRadius = "4px";
+        confirmInput.focus();
+
+        let noticeEl = document.querySelector(".mss-validation-notice");
+        if (!noticeEl) {
+          noticeEl = document.createElement("div");
+          noticeEl.className = "mss-validation-notice";
+          noticeEl.textContent = "Passwords do not match.";
+          noticeEl.style.cssText = `
+            background: var(--danger-low, #ffe8e8);
+            color: var(--danger, #c00);
+            border: 1px solid var(--danger, #c00);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 0.95em;
+            text-align: center;
+          `;
+          nav.before(noticeEl);
+
+          setTimeout(() => {
+            if (noticeEl && noticeEl.parentNode) {
+              noticeEl.style.transition = "opacity 0.3s";
+              noticeEl.style.opacity = "0";
+              setTimeout(() => noticeEl.remove(), 300);
+            }
+          }, 5000);
+        }
+
+        return false;
+      }
+
+      const actualSubmitBtn = document.querySelector(".sign-up-button");
+      if (actualSubmitBtn) {
+        actualSubmitBtn.click();
+      }
+    });
 
     showStep(1);
   }
