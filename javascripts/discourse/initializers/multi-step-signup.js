@@ -295,10 +295,18 @@ export default apiInitializer("0.8", (api) => {
 
     globalObserver = new MutationObserver(() => {
       const formPresent = !!document.querySelector(".create-account");
-      if (formPresent && !initialized) {
-        setTimeout(tryInit, 200);
-      } else if (!formPresent && initialized) {
+      const navPresent  = !!document.querySelector(".multi-step-nav");
+
+      if (!formPresent && initialized) {
         cleanup();
+      } else if (formPresent && initialized && !navPresent) {
+        // Ember re-rendered the form, wiping our injected DOM — re-init
+        initialized = false;
+        allStepElements = [];
+        currentStep = 0;
+        setTimeout(tryInit, 200);
+      } else if (formPresent && !initialized) {
+        setTimeout(tryInit, 200);
       }
     });
 
