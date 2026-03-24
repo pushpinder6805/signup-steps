@@ -509,6 +509,33 @@ export default apiInitializer("0.8", (api) => {
       userFieldsEl.after(nav);
     }
 
+    function checkStep1Validation() {
+      const missing = getVisibleRequiredFields(1, coreFields, page2Groups, page3Groups);
+
+      if (currentStep === 1 && passwordConfirmField) {
+        const passwordInput = passwordField.querySelector("input");
+        const confirmInput = passwordConfirmField.querySelector("input");
+        if (passwordInput && confirmInput) {
+          if (!passwordInput.value || !confirmInput.value || passwordInput.value !== confirmInput.value) {
+            nextBtn.disabled = true;
+            nextBtn.style.background = "#ccc";
+            nextBtn.style.cursor = "not-allowed";
+            return;
+          }
+        }
+      }
+
+      if (missing.length === 0) {
+        nextBtn.disabled = false;
+        nextBtn.style.background = "#28a745";
+        nextBtn.style.cursor = "pointer";
+      } else {
+        nextBtn.disabled = true;
+        nextBtn.style.background = "#ccc";
+        nextBtn.style.cursor = "not-allowed";
+      }
+    }
+
     function showStep(step) {
       currentStep = step;
 
@@ -561,11 +588,30 @@ export default apiInitializer("0.8", (api) => {
       }
 
       updateProgressBar(segments, step);
+
+      if (step === 1) {
+        checkStep1Validation();
+      }
     }
+
+    coreFields.forEach((fieldWrap) => {
+      const input = fieldWrap.querySelector("input");
+      if (input) {
+        input.addEventListener("input", () => {
+          if (currentStep === 1) {
+            checkStep1Validation();
+          }
+        });
+      }
+    });
 
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+
+      if (nextBtn.disabled) {
+        return;
+      }
 
       const missing = getVisibleRequiredFields(
         currentStep,
