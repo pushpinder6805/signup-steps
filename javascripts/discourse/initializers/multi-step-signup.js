@@ -21,6 +21,8 @@ export default apiInitializer("0.8", (api) => {
     });
     const submitBtn = document.querySelector(".sign-up-button");
     if (submitBtn) submitBtn.style.display = "";
+    const signupCta = document.querySelector(".signup-page-cta");
+    if (signupCta) signupCta.style.display = "";
   }
 
   function buildTextBox(bodyText) {
@@ -338,6 +340,15 @@ export default apiInitializer("0.8", (api) => {
         gap: 6px;
       }
 
+      .signup-page-cta {
+        display: none !important;
+      }
+
+      .login-welcome-header .tip,
+      .login-welcome-header + .tip {
+        display: none !important;
+      }
+
       .mss-legal-text-box {
         border: 1px solid var(--primary-low, #d0d0d0);
         border-radius: 6px;
@@ -395,9 +406,12 @@ export default apiInitializer("0.8", (api) => {
 
     const { barWrap, segments } = buildProgressBar(totalSteps);
 
-    const requiredText = document.createElement("div");
-    requiredText.className = "mss-required-text";
-    requiredText.textContent = "Fields marked with * are required.";
+    let requiredText = document.querySelector(".mss-required-text");
+    if (!requiredText) {
+      requiredText = document.createElement("div");
+      requiredText.className = "mss-required-text";
+      requiredText.textContent = "Fields marked with * are required.";
+    }
 
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
@@ -431,14 +445,29 @@ export default apiInitializer("0.8", (api) => {
 
     if (headingContainer) {
       headingContainer.before(barWrap);
-      headingContainer.after(requiredText);
+      if (!document.querySelector(".mss-required-text")) {
+        headingContainer.after(requiredText);
+      }
     } else if (formEl) {
       formEl.before(barWrap);
-      formEl.before(requiredText);
+      if (!document.querySelector(".mss-required-text")) {
+        formEl.before(requiredText);
+      }
     } else if (userFieldsEl) {
       userFieldsEl.before(barWrap);
-      userFieldsEl.before(requiredText);
+      if (!document.querySelector(".mss-required-text")) {
+        userFieldsEl.before(requiredText);
+      }
     }
+
+    const signupCta = document.querySelector(".signup-page-cta");
+    if (signupCta) {
+      signupCta.style.display = "none";
+    }
+
+    document.querySelectorAll(".login-welcome-header .tip, .login-welcome-header + .tip").forEach((el) => {
+      el.style.display = "none";
+    });
 
     if (userFieldsEl) {
       userFieldsEl.after(nav);
