@@ -451,7 +451,7 @@ export default apiInitializer("0.8", (api) => {
     nextBtn.innerHTML = `Continue`;
 
     const completeBtn = document.createElement("button");
-    completeBtn.type = "submit";
+    completeBtn.type = "button";
     completeBtn.className = "btn btn-primary mss-complete-btn";
     completeBtn.innerHTML = `Complete signup`;
     completeBtn.style.display = "none";
@@ -599,6 +599,8 @@ export default apiInitializer("0.8", (api) => {
       e.preventDefault();
       e.stopPropagation();
 
+      console.log("[Multi-Step] Complete button clicked");
+
       function showNotice(message) {
         let noticeEl = document.querySelector(".mss-validation-notice");
         if (noticeEl) {
@@ -630,8 +632,10 @@ export default apiInitializer("0.8", (api) => {
       }
 
       const missingPage3 = getVisibleRequiredFields(3, coreFields, page2Groups, page3Groups);
+      console.log("[Multi-Step] Missing page 3 fields:", missingPage3.length);
 
       if (missingPage3.length) {
+        console.log("[Multi-Step] Validation failed on page 3");
         highlightMissing(missingPage3);
         showNotice("Please fill in all required fields before completing signup.");
         return false;
@@ -639,8 +643,10 @@ export default apiInitializer("0.8", (api) => {
 
       const missingCore = getVisibleRequiredFields(1, coreFields, page2Groups, page3Groups);
       const missingPage2 = getVisibleRequiredFields(2, coreFields, page2Groups, page3Groups);
+      console.log("[Multi-Step] Missing core fields:", missingCore.length, "Missing page 2:", missingPage2.length);
 
       if (missingCore.length || missingPage2.length) {
+        console.log("[Multi-Step] Validation failed on previous pages");
         showNotice("Please complete all previous pages. Some required fields are missing.");
         return false;
       }
@@ -649,23 +655,49 @@ export default apiInitializer("0.8", (api) => {
       const confirmInput = passwordConfirmField ? passwordConfirmField.querySelector("input") : null;
 
       if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
+        console.log("[Multi-Step] Password mismatch");
         confirmInput.style.outline = "2px solid var(--danger, #c00)";
         confirmInput.style.borderRadius = "4px";
         showNotice("Passwords do not match.");
         return false;
       }
 
+      console.log("[Multi-Step] All validations passed, capturing state tags");
       captureStateTags();
 
-      const actualSubmitBtn = document.querySelector(".sign-up-button");
+      const actualSubmitBtn = document.querySelector(".sign-up-button") ||
+                             document.querySelector('button[type="submit"]') ||
+                             document.querySelector('.create-account button.btn-primary');
+      console.log("[Multi-Step] Submit button found:", !!actualSubmitBtn);
+
       if (actualSubmitBtn) {
+        console.log("[Multi-Step] Clicking submit button");
         actualSubmitBtn.click();
-      } else {
-        const form = document.querySelector(".create-account");
-        if (form) {
+        return;
+      }
+
+      const form = document.querySelector(".create-account") ||
+                   document.querySelector("form");
+      console.log("[Multi-Step] Form found:", !!form);
+
+      if (form) {
+        console.log("[Multi-Step] Attempting form submission");
+
+        try {
+          if (form.requestSubmit) {
+            form.requestSubmit();
+          } else {
+            form.submit();
+          }
+        } catch (error) {
+          console.error("[Multi-Step] Form submission error:", error);
+
           const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
           form.dispatchEvent(submitEvent);
         }
+      } else {
+        console.error("[Multi-Step] No submit button or form found!");
+        showNotice("Unable to submit form. Please refresh and try again.");
       }
     });
 
