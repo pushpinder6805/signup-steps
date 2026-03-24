@@ -3,15 +3,16 @@ import { ajax } from "discourse/lib/ajax";
 
 export default apiInitializer("0.8", (api) => {
   let initialized = false;
-  let observer = null;
+  let formObserver = null;
+  let globalObserver = null;
 
-  // ─── Teardown ────────────────────────────────────────────────────────────────
+  // ─── Teardown ─────────────────────────────────────────────────────────────
   function cleanup() {
     initialized = false;
 
-    if (observer) {
-      observer.disconnect();
-      observer = null;
+    if (formObserver) {
+      formObserver.disconnect();
+      formObserver = null;
     }
 
     document.body.classList.remove(
@@ -27,16 +28,23 @@ export default apiInitializer("0.8", (api) => {
       )
       .forEach((el) => el.remove());
 
-    document.querySelectorAll(".mss-legal-text-box[data-mss]").forEach((el) => el.remove());
+    document
+      .querySelectorAll(".mss-legal-text-box[data-mss]")
+      .forEach((el) => el.remove());
 
     document
-      .querySelectorAll("[class*='mss-step-']")
+      .querySelectorAll(".mss-step-1, .mss-step-2, .mss-step-3, .mss-step-4")
       .forEach((el) => {
-        el.classList.remove("mss-step-1", "mss-step-2", "mss-step-3", "mss-step-4");
+        el.classList.remove(
+          "mss-step-1",
+          "mss-step-2",
+          "mss-step-3",
+          "mss-step-4"
+        );
       });
   }
 
-  // ─── Progress bar ────────────────────────────────────────────────────────────
+  // ─── Progress bar ──────────────────────────────────────────────────────────
   function buildProgressBar(totalSteps) {
     const barWrap = document.createElement("div");
     barWrap.className = "mss-progress-bar-wrap";
@@ -68,48 +76,34 @@ export default apiInitializer("0.8", (api) => {
     });
   }
 
-  // ─── Legal text box ──────────────────────────────────────────────────────────
-  function buildTextBox(text) {
-    const box = document.createElement("div");
-    box.className = "mss-legal-text-box mss-hidden";
-    box.setAttribute("data-mss", "1");
-    box.textContent = text;
-    return box;
-  }
-
-  // ─── Core init ───────────────────────────────────────────────────────────────
+  // ─── Core init ─────────────────────────────────────────────────────────────
   function initMultiStep() {
     if (initialized) return;
 
-    // Must be on the signup page
-    if (!document.querySelector(".create-account")) return;
+    const emailField = document.querySelector(".create-account-email");
+    const usernameField = document.querySelector(".create-account__username");
+    const passwordField = document.querySelector(".create-account__password");
 
-    // Wait until user-fields are present
+    if (!emailField || !usernameField || !passwordField) return;
+
     const userFieldsEl = document.querySelector(".user-fields");
     const groups = userFieldsEl
       ? Array.from(userFieldsEl.querySelectorAll(".input-group"))
       : [];
 
-    // Core Discourse fields (always present on signup form)
-    const emailField    = document.querySelector(".create-account-email");
-    const usernameField = document.querySelector(".create-account__username");
-    const passwordField = document.querySelector(".create-account__password");
-
-    // Need at least the core fields to proceed
-    if (!emailField || !usernameField || !passwordField) return;
-
     initialized = true;
 
     const TOTAL_STEPS = 4;
 
-    // ── Assign step classes to core fields ──────────────────────────────────
+    // Step 1 — core Discourse fields
     emailField.classList.add("mss-step-1");
     usernameField.classList.add("mss-step-1");
     passwordField.classList.add("mss-step-1");
 
-    // ── Re-enter Password field ──────────────────────────────────────────────
+    // Re-enter Password field (visual only — Discourse doesn't use it for auth)
     const passwordConfirmField = document.createElement("div");
-    passwordConfirmField.className = "create-account__password create-account__password-confirm mss-step-1";
+    passwordConfirmField.className =
+      "create-account__password create-account__password-confirm mss-step-1";
 
     const confirmLabel = document.createElement("label");
     confirmLabel.textContent = "Re-enter Password*";
@@ -127,57 +121,71 @@ export default apiInitializer("0.8", (api) => {
     passwordConfirmField.appendChild(confirmWrapper);
     passwordField.after(passwordConfirmField);
 
-    // ── Assign step classes to user-field groups ─────────────────────────────
-    // page 2: first 7 groups  → Enter Your Details
-    // page 3: next 5 groups   → About Your Organization
-    // page 4: remaining       → Participation Agreement
+    // Step 2 — first 7 user-fields (Enter Your Details)
     groups.slice(0, 7).forEach((g) => g.classList.add("mss-step-2"));
+    // Step 3 — next 5 user-fields (About Your Organization)
     groups.slice(7, 12).forEach((g) => g.classList.add("mss-step-3"));
+    // Step 4 — remaining user-fields (Participation Agreement)
     groups.slice(12).forEach((g) => g.classList.add("mss-step-4"));
 
-    // ── Legal text boxes (step 4) ────────────────────────────────────────────
+    // Legal text boxes
     const guidelinesText =
-      (settings && settings.community_guidelines_text) ||
+      (typeof settings !== "undefined" && settings.community_guidelines_text) ||
       "Please read our community guidelines carefully before proceeding.";
     const privacyText =
-      (settings && settings.privacy_policy_text) ||
+      (typeof settings !== "undefined" && settings.privacy_policy_text) ||
       "Please read our privacy policy carefully before proceeding.";
 
-    const guidelinesBox = buildTextBox(guidelinesText);
-    const privacyBox    = buildTextBox(privacyText);
+    const guidelinesBox = document.createElement("div");
+    guidelinesBox.className = "mss-legal-text-box mss-hidden";
+    guidelinesBox.setAttribute("data-mss", "1");
+    guidelinesBox.textContent = guidelinesText;
+
+    const privacyBox = document.createElement("div");
+    privacyBox.className = "mss-legal-text-box mss-hidden";
+    privacyBox.setAttribute("data-mss", "1");
+    privacyBox.textContent = privacyText;
 
     const step4Groups = groups.slice(12);
-    if (step4Groups.length >= 1) step4Groups[0].before(guidelinesBox);
-    if (step4Groups.length >= 2) step4Groups[1].before(privacyBox);
-    else if (step4Groups.length === 1) step4Groups[0].after(privacyBox);
-    else if (userFieldsEl) {
+    if (step4Groups.length >= 1) {
+      step4Groups[0].before(guidelinesBox);
+    }
+    if (step4Groups.length >= 2) {
+      step4Groups[1].before(privacyBox);
+    } else if (step4Groups.length === 1) {
+      step4Groups[0].after(privacyBox);
+    } else if (userFieldsEl) {
       userFieldsEl.appendChild(guidelinesBox);
       userFieldsEl.appendChild(privacyBox);
     }
 
-    // ── Progress bar ─────────────────────────────────────────────────────────
+    // Progress bar
     const { barWrap, segments } = buildProgressBar(TOTAL_STEPS);
     const titleEl = document.querySelector("#create-account-title");
     if (titleEl) {
       titleEl.before(barWrap);
     } else {
-      document.querySelector(".create-account").prepend(barWrap);
+      const form = document.querySelector(".create-account");
+      if (form) form.prepend(barWrap);
     }
 
-    // ── "Fields marked with * are required" notice ───────────────────────────
+    // "Fields marked with * are required" text
     const requiredText = document.createElement("div");
     requiredText.className = "mss-required-text";
     requiredText.textContent = "Fields marked with * are required.";
-    if (titleEl) titleEl.after(requiredText);
-    else barWrap.after(requiredText);
+    if (titleEl) {
+      titleEl.after(requiredText);
+    } else {
+      barWrap.after(requiredText);
+    }
 
-    // ── Navigation buttons ───────────────────────────────────────────────────
+    // Navigation buttons
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
 
     const backBtn = document.createElement("button");
     backBtn.type = "button";
-    backBtn.className = "btn mss-back-btn";
+    backBtn.className = "btn mss-back-btn mss-hidden";
     backBtn.textContent = "Back";
 
     const nextBtn = document.createElement("button");
@@ -187,7 +195,7 @@ export default apiInitializer("0.8", (api) => {
 
     const completeBtn = document.createElement("button");
     completeBtn.type = "button";
-    completeBtn.className = "btn btn-primary mss-complete-btn";
+    completeBtn.className = "btn btn-primary mss-complete-btn mss-hidden";
     completeBtn.textContent = "Complete Signup";
 
     nav.appendChild(backBtn);
@@ -197,21 +205,21 @@ export default apiInitializer("0.8", (api) => {
     if (userFieldsEl) {
       userFieldsEl.after(nav);
     } else {
-      document.querySelector(".create-account").appendChild(nav);
+      const form = document.querySelector(".create-account");
+      if (form) form.appendChild(nav);
     }
 
-    // Hide the original Discourse submit button (visually) so our nav drives flow
+    // Hide Discourse's own submit button
     document.querySelectorAll(".sign-up-button").forEach((btn) => {
-      btn.style.cssText = "position:absolute;left:-9999px;opacity:0;pointer-events:none;";
+      btn.style.cssText =
+        "position:absolute;left:-9999px;opacity:0;pointer-events:none;";
     });
 
-    // ── Step controller ──────────────────────────────────────────────────────
     let currentStep = 0;
 
     function goToStep(step) {
       currentStep = step;
 
-      // Update heading
       const heading = document.querySelector("#create-account-title");
       if (heading) {
         const titles = [
@@ -223,27 +231,24 @@ export default apiInitializer("0.8", (api) => {
         heading.textContent = titles[step - 1] || "";
       }
 
-      // Swap body class
       document.body.classList.remove(
-        "mss-on-step-1", "mss-on-step-2", "mss-on-step-3", "mss-on-step-4"
+        "mss-on-step-1",
+        "mss-on-step-2",
+        "mss-on-step-3",
+        "mss-on-step-4"
       );
       document.body.classList.add(`mss-on-step-${step}`);
 
-      // Legal boxes only visible on step 4
       [guidelinesBox, privacyBox].forEach((box) => {
         box.classList.toggle("mss-hidden", step !== 4);
       });
 
-      // Nav visibility
       backBtn.classList.toggle("mss-hidden", step === 1);
       nextBtn.classList.toggle("mss-hidden", step === TOTAL_STEPS);
       completeBtn.classList.toggle("mss-hidden", step !== TOTAL_STEPS);
 
       updateProgressBar(segments, step);
 
-      // Scroll form to top
-      const form = document.querySelector(".create-account");
-      if (form) form.scrollTop = 0;
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -266,74 +271,94 @@ export default apiInitializer("0.8", (api) => {
       triggerDiscourseSubmit();
     });
 
-    // Start on step 1
     goToStep(1);
   }
 
-  // ─── Trigger Discourse's own form submission ─────────────────────────────────
+  // ─── Submit ────────────────────────────────────────────────────────────────
   function triggerDiscourseSubmit() {
-    const submitBtn =
-      document.querySelector(".sign-up-button") ||
-      document.querySelector("form.create-account [type='submit']");
-
+    const submitBtn = document.querySelector(".sign-up-button");
     if (submitBtn) {
-      submitBtn.removeAttribute("style");
+      submitBtn.style.cssText = "";
       submitBtn.click();
       setTimeout(() => {
-        submitBtn.style.cssText =
-          "position:absolute;left:-9999px;opacity:0;pointer-events:none;";
-      }, 500);
+        if (submitBtn) {
+          submitBtn.style.cssText =
+            "position:absolute;left:-9999px;opacity:0;pointer-events:none;";
+        }
+      }, 1000);
       return;
     }
 
-    const form =
-      document.querySelector("form.create-account") ||
+    const form = document.querySelector("form.create-account") ||
       document.querySelector(".create-account");
-
-    if (form && form.requestSubmit) {
-      form.requestSubmit();
-    } else if (form) {
-      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    if (form) {
+      const ev = new Event("submit", { bubbles: true, cancelable: true });
+      form.dispatchEvent(ev);
     }
   }
 
-  // ─── Wait for form to appear, then init ──────────────────────────────────────
-  function waitForForm() {
+  // ─── Wait for form fields to appear ───────────────────────────────────────
+  function waitForFormFields() {
     if (initialized) return;
 
-    // Check immediately
-    const ready =
+    const hasFields =
       document.querySelector(".create-account-email") &&
       document.querySelector(".create-account__username") &&
       document.querySelector(".create-account__password");
 
-    if (ready) {
+    if (hasFields) {
       initMultiStep();
       return;
     }
 
-    // Watch for DOM changes
-    if (observer) observer.disconnect();
-    observer = new MutationObserver(() => {
+    // Watch the modal/form container for field injection
+    const container =
+      document.querySelector(".create-account") ||
+      document.querySelector(".modal-body") ||
+      document.body;
+
+    if (formObserver) formObserver.disconnect();
+
+    formObserver = new MutationObserver(() => {
       if (initialized) {
-        observer.disconnect();
-        observer = null;
+        formObserver.disconnect();
+        formObserver = null;
         return;
       }
-      const nowReady =
+      const ready =
         document.querySelector(".create-account-email") &&
         document.querySelector(".create-account__username") &&
         document.querySelector(".create-account__password");
-      if (nowReady) {
-        observer.disconnect();
-        observer = null;
+      if (ready) {
+        formObserver.disconnect();
+        formObserver = null;
         initMultiStep();
       }
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+
+    formObserver.observe(container, { childList: true, subtree: true });
   }
 
-  // ─── State-tag capture (existing feature) ────────────────────────────────────
+  // ─── Global observer — watches for signup modal appearing/disappearing ─────
+  // This is the KEY fix: Discourse opens signup as a modal without a page
+  // change, so onPageChange never fires. We need a persistent observer.
+  function startGlobalObserver() {
+    if (globalObserver) return;
+
+    globalObserver = new MutationObserver(() => {
+      const formPresent = !!document.querySelector(".create-account");
+
+      if (formPresent && !initialized) {
+        waitForFormFields();
+      } else if (!formPresent && initialized) {
+        cleanup();
+      }
+    });
+
+    globalObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // ─── State-tag capture ─────────────────────────────────────────────────────
   let _pendingStateTags = [];
 
   function captureStateTags() {
@@ -355,7 +380,9 @@ export default apiInitializer("0.8", (api) => {
     }
 
     stateField
-      .querySelectorAll(".select-kit-header .choice, .multi-select-header .choice")
+      .querySelectorAll(
+        ".select-kit-header .choice, .multi-select-header .choice"
+      )
       .forEach((choice) => {
         const val = choice.dataset.value || choice.dataset.name;
         if (val) addTag(val);
@@ -404,16 +431,17 @@ export default apiInitializer("0.8", (api) => {
     setTimeout(() => waitForCurrentUserThenWatch(), 1000);
   });
 
-  // ─── Page change hook ─────────────────────────────────────────────────────────
-  api.onPageChange((url) => {
-    cleanup();
-    // Only activate on signup-related routes
-    if (
-      url.includes("/signup") ||
-      url.includes("/register") ||
-      document.querySelector(".create-account")
-    ) {
-      waitForForm();
+  // ─── Bootstrap ────────────────────────────────────────────────────────────
+  // Start global observer immediately so we catch the modal opening
+  startGlobalObserver();
+
+  // Also handle page-based signup routes (non-modal)
+  api.onPageChange(() => {
+    const formPresent = !!document.querySelector(".create-account");
+    if (!formPresent) {
+      cleanup();
+    } else if (!initialized) {
+      waitForFormFields();
     }
   });
 });
