@@ -299,7 +299,7 @@ export default apiInitializer("0.8", (api) => {
       confirmField = document.createElement("div");
       confirmField.className = "create-account__password mss-password-confirm";
 
-      /* ✅ ONLY MODIFIED BLOCK */
+      /* ✅ ONLY MODIFIED BLOCK check */
       confirmField.innerHTML =
         `<label>Re-enter Password*</label>
          <div class="password-wrapper confirm-password-wrapper">
@@ -374,6 +374,8 @@ export default apiInitializer("0.8", (api) => {
         setHeading("Participation Agreement");
         setTimeout(injectPolicyBoxes, 100);
       }
+      /* ✅ NEW LINE (same for all steps) */
+  setSubHeading("Fields marked with * are required.");
 
       updateProgressBar(step);
 
