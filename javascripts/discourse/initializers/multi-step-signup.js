@@ -26,6 +26,25 @@ export default apiInitializer("0.8", (api) => {
     label.textContent = step === 4 ? "Complete Sign Up" : "Sign Up";
   }
 
+  // ✅ PROGRESS BAR FIX
+  function updateProgressBar(step) {
+    const segments = document.querySelectorAll(".signup-progress-bar__segment");
+
+    segments.forEach((seg, index) => {
+      const stepNum = index + 1;
+
+      seg.classList.remove("--active", "--complete", "--incomplete");
+
+      if (stepNum < step) {
+        seg.classList.add("--complete");
+      } else if (stepNum === step) {
+        seg.classList.add("--active");
+      } else {
+        seg.classList.add("--incomplete");
+      }
+    });
+  }
+
   function cleanup() {
     initialized = false;
 
@@ -59,6 +78,7 @@ export default apiInitializer("0.8", (api) => {
       });
 
       const selectKit = wrap.querySelector(".select-kit");
+
       if (selectKit) {
         const selected =
           selectKit.querySelector(".selected-name") ||
@@ -165,6 +185,9 @@ export default apiInitializer("0.8", (api) => {
       if (step === 3) setHeading("About Your Organization");
       if (step === 4) setHeading("Participation Agreement");
 
+      // ✅ update progress
+      updateProgressBar(step);
+
       coreFields.forEach((el) =>
         step === 1 ? safeShow(el) : safeHide(el)
       );
@@ -182,7 +205,10 @@ export default apiInitializer("0.8", (api) => {
       );
 
       const cta = document.querySelector(".signup-page-cta");
-      if (cta) safeShow(step === 4 ? cta : null), safeHide(step !== 4 ? cta : null);
+      if (cta) {
+        if (step === 4) safeShow(cta);
+        else safeHide(cta);
+      }
 
       nextBtn.style.display = step === 4 ? "none" : "inline-flex";
 
