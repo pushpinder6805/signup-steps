@@ -378,9 +378,18 @@ export default apiInitializer("0.8", (api) => {
     const nativeSubmitBtn = document.querySelector(".sign-up-button");
     if (!nativeSubmitBtn) return;
 
+    // Hide the native submit button - we'll control when it's clicked
+    nativeSubmitBtn.style.display = "none";
+
+    // Create our custom continue/submit button
+    const continueBtn = document.createElement("button");
+    continueBtn.type = "button";
+    continueBtn.className = "sign-up-button btn btn-primary";
+    continueBtn.innerHTML = "Continue &#8594;";
+
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
-    nav.appendChild(nativeSubmitBtn);
+    nav.appendChild(continueBtn);
 
     const userFieldsEl = document.querySelector(".user-fields");
     const formEl = document.querySelector(".create-account");
@@ -423,6 +432,8 @@ export default apiInitializer("0.8", (api) => {
 
     if (userFieldsEl) {
       userFieldsEl.after(nav);
+    } else if (formEl) {
+      formEl.after(nav);
     }
 
     function showStep(step) {
@@ -455,42 +466,47 @@ export default apiInitializer("0.8", (api) => {
         privacyTextBox.classList.add("mss-hidden");
       }
 
-      nativeSubmitBtn.innerHTML = step === totalSteps ? "Create Account" : "Continue &#8594;";
+      continueBtn.innerHTML = step === totalSteps ? "Create Account" : "Continue &#8594;";
 
       updateProgressBar(segments, step);
     }
 
-    nativeSubmitBtn.addEventListener("click", (e) => {
-      if (currentStep < totalSteps) {
-        e.preventDefault();
-        e.stopPropagation();
+    continueBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-        const missing = getVisibleRequiredFields(
-          currentStep,
-          coreFields,
-          page2Groups,
-          page3Groups
-        );
-        if (missing.length) {
-          highlightMissing(missing);
+      const missing = getVisibleRequiredFields(
+        currentStep,
+        coreFields,
+        page2Groups,
+        page3Groups
+      );
+      if (missing.length) {
+        highlightMissing(missing);
+        return;
+      }
+
+      if (currentStep === 1 && passwordConfirmField) {
+        const passwordInput = passwordField.querySelector("input");
+        const confirmInput = passwordConfirmField.querySelector("input");
+        if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
+          confirmInput.style.outline = "2px solid var(--danger, #c00)";
+          confirmInput.style.borderRadius = "4px";
+          confirmInput.focus();
+          const clearOutline = () => {
+            confirmInput.style.outline = "";
+            confirmInput.removeEventListener("input", clearOutline);
+          };
+          confirmInput.addEventListener("input", clearOutline);
           return;
         }
-        if (currentStep === 1 && passwordConfirmField) {
-          const passwordInput = passwordField.querySelector("input");
-          const confirmInput = passwordConfirmField.querySelector("input");
-          if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
-            confirmInput.style.outline = "2px solid var(--danger, #c00)";
-            confirmInput.style.borderRadius = "4px";
-            confirmInput.focus();
-            const clearOutline = () => {
-              confirmInput.style.outline = "";
-              confirmInput.removeEventListener("input", clearOutline);
-            };
-            confirmInput.addEventListener("input", clearOutline);
-            return;
-          }
-        }
+      }
+
+      if (currentStep < totalSteps) {
         showStep(currentStep + 1);
+      } else {
+        // On final step, trigger the native submit
+        nativeSubmitBtn.click();
       }
     });
 
