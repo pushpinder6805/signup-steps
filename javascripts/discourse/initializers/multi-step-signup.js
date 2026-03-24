@@ -300,27 +300,9 @@ export default apiInitializer("0.8", (api) => {
         padding-top: 0;
         border-top: none;
       }
-      .multi-step-nav .btn-primary {
-        background: var(--primary-low-mid, #c8c8c8);
-        color: var(--primary, #222);
-        border: none;
-        padding: 14px 0;
-        border-radius: 24px;
-        font-size: 1em;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.2s;
+      .multi-step-nav .sign-up-button {
         width: 100%;
         max-width: 600px;
-      }
-      .multi-step-nav .btn-primary:hover {
-        background: var(--primary-low, #d8d8d8);
-      }
-      .multi-step-nav .btn {
-        display: inline-flex !important;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
       }
       .signup-page-cta {
         display: none !important;
@@ -392,27 +374,12 @@ export default apiInitializer("0.8", (api) => {
       requiredText.textContent = "Fields marked with * are required.";
     }
 
+    const nativeSubmitBtn = document.querySelector(".sign-up-button");
+    if (!nativeSubmitBtn) return;
+
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
-
-    const backBtn = document.createElement("button");
-    backBtn.type = "button";
-    backBtn.className = "btn";
-    backBtn.innerHTML = `&#8592; Back`;
-    backBtn.style.cssText = `margin-right: auto;`;
-
-    const nextBtn = document.createElement("button");
-    nextBtn.type = "button";
-    nextBtn.className = "btn btn-primary";
-    nextBtn.innerHTML = `Continue`;
-
-    nav.appendChild(backBtn);
-    nav.appendChild(nextBtn);
-
-    const nativeSubmitBtn = document.querySelector(".sign-up-button");
-    if (nativeSubmitBtn) {
-      nav.appendChild(nativeSubmitBtn);
-    }
+    nav.appendChild(nativeSubmitBtn);
 
     const userFieldsEl = document.querySelector(".user-fields");
     const formEl = document.querySelector(".create-account");
@@ -487,52 +454,43 @@ export default apiInitializer("0.8", (api) => {
         privacyTextBox.classList.add("mss-hidden");
       }
 
-      backBtn.style.display = step === 1 ? "none" : "inline-flex";
-      nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
-
-      const nativeBtnInNav = nav.querySelector(".sign-up-button");
-      if (nativeBtnInNav) {
-        nativeBtnInNav.style.display = step === totalSteps ? "" : "none";
-      }
+      nativeSubmitBtn.innerHTML = step === totalSteps ? "Create Account" : "Continue &#8594;";
 
       updateProgressBar(segments, step);
     }
 
-    nextBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const missing = getVisibleRequiredFields(
-        currentStep,
-        coreFields,
-        page2Groups,
-        page3Groups
-      );
-      if (missing.length) {
-        highlightMissing(missing);
-        return;
-      }
-      if (currentStep === 1 && passwordConfirmField) {
-        const passwordInput = passwordField.querySelector("input");
-        const confirmInput = passwordConfirmField.querySelector("input");
-        if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
-          confirmInput.style.outline = "2px solid var(--danger, #c00)";
-          confirmInput.style.borderRadius = "4px";
-          confirmInput.focus();
-          const clearOutline = () => {
-            confirmInput.style.outline = "";
-            confirmInput.removeEventListener("input", clearOutline);
-          };
-          confirmInput.addEventListener("input", clearOutline);
+    nativeSubmitBtn.addEventListener("click", (e) => {
+      if (currentStep < totalSteps) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const missing = getVisibleRequiredFields(
+          currentStep,
+          coreFields,
+          page2Groups,
+          page3Groups
+        );
+        if (missing.length) {
+          highlightMissing(missing);
           return;
         }
+        if (currentStep === 1 && passwordConfirmField) {
+          const passwordInput = passwordField.querySelector("input");
+          const confirmInput = passwordConfirmField.querySelector("input");
+          if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
+            confirmInput.style.outline = "2px solid var(--danger, #c00)";
+            confirmInput.style.borderRadius = "4px";
+            confirmInput.focus();
+            const clearOutline = () => {
+              confirmInput.style.outline = "";
+              confirmInput.removeEventListener("input", clearOutline);
+            };
+            confirmInput.addEventListener("input", clearOutline);
+            return;
+          }
+        }
+        showStep(currentStep + 1);
       }
-      if (currentStep < totalSteps) showStep(currentStep + 1);
-    });
-
-    backBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (currentStep > 1) showStep(currentStep - 1);
     });
 
     showStep(1);
