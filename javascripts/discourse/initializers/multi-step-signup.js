@@ -21,25 +21,18 @@ export default apiInitializer("0.8", (api) => {
 
   function setHeading(text) {
     const heading = document.querySelector("#create-account-title");
-    if (heading) {
-      heading.innerText = text;
-    }
+    if (heading) heading.innerText = text;
   }
 
+  // ✅ ONLY CTA button control
   function hideButtons() {
-    const submitBtn = document.querySelector(".sign-up-button");
     const cta = document.querySelector(".signup-page-cta");
-
-    if (submitBtn) submitBtn.style.display = "none";
     if (cta) cta.style.display = "none";
   }
 
   function showButtons() {
-    const submitBtn = document.querySelector(".sign-up-button");
     const cta = document.querySelector(".signup-page-cta");
-
-    if (submitBtn) submitBtn.style.display = "";
-    if (cta) cta.style.display = "none"; // keep CTA hidden permanently
+    if (cta) cta.style.display = "";
   }
 
   function cleanup() {
@@ -81,10 +74,12 @@ export default apiInitializer("0.8", (api) => {
   function highlightMissing(inputs) {
     inputs.forEach((input) => {
       input.style.outline = "2px solid red";
+
       const clear = () => {
         input.style.outline = "";
         input.removeEventListener("input", clear);
       };
+
       input.addEventListener("input", clear);
     });
 
@@ -187,8 +182,13 @@ export default apiInitializer("0.8", (api) => {
 
     // -------- OBSERVER --------
     observer = new MutationObserver(() => {
-      if (currentStep !== 4) {
-        hideButtons();
+      const cta = document.querySelector(".signup-page-cta");
+      if (!cta) return;
+
+      if (currentStep === 4) {
+        cta.style.display = "";
+      } else {
+        cta.style.display = "none";
       }
     });
 
@@ -201,13 +201,11 @@ export default apiInitializer("0.8", (api) => {
     function showStep(step) {
       currentStep = step;
 
-      // headings
       if (step === 1) setHeading("Create your Account");
       if (step === 2) setHeading("Enter Your Details");
       if (step === 3) setHeading("About Your Organization");
       if (step === 4) setHeading("Participation Agreement");
 
-      // fields
       coreFields.forEach((el) =>
         step === 1 ? safeShow(el) : safeHide(el)
       );
@@ -224,7 +222,6 @@ export default apiInitializer("0.8", (api) => {
         step === 4 ? safeShow(el) : safeHide(el)
       );
 
-      // buttons
       if (step === 4) {
         showButtons();
       } else {
