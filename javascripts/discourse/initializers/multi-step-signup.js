@@ -296,8 +296,7 @@ export default apiInitializer("0.8", (api) => {
     globalObserver = new MutationObserver(() => {
       const formPresent = !!document.querySelector(".create-account");
       if (formPresent && !initialized) {
-        // Defer one tick so Discourse finishes rendering all fields
-        setTimeout(tryInit, 50);
+        setTimeout(tryInit, 200);
       } else if (!formPresent && initialized) {
         cleanup();
       }
@@ -311,11 +310,17 @@ export default apiInitializer("0.8", (api) => {
     const emailField    = document.querySelector(".create-account-email");
     const usernameField = document.querySelector(".create-account__username");
     const passwordField = document.querySelector(".create-account__password");
-    if (emailField && usernameField && passwordField) {
-      initMultiStep();
-    } else {
-      // Fields not ready yet, wait a bit more
-      setTimeout(tryInit, 100);
+    const userFields    = document.querySelector(".user-fields");
+
+    if (emailField && usernameField && passwordField && userFields) {
+      const groups = userFields.querySelectorAll(".input-group");
+      if (groups.length > 0) {
+        initMultiStep();
+      } else {
+        setTimeout(tryInit, 150);
+      }
+    } else if (emailField || usernameField) {
+      setTimeout(tryInit, 150);
     }
   }
 
@@ -390,12 +395,16 @@ export default apiInitializer("0.8", (api) => {
   // ─── Bootstrap ─────────────────────────────────────────────────────────────
   startGlobalObserver();
 
-  // Also catch direct page-based signup (non-modal)
   api.onPageChange(() => {
     if (document.querySelector(".create-account") && !initialized) {
-      tryInit();
+      setTimeout(tryInit, 200);
     } else if (!document.querySelector(".create-account") && initialized) {
       cleanup();
     }
   });
+
+  // Catch case where modal is already open on load
+  if (document.querySelector(".create-account") && !initialized) {
+    setTimeout(tryInit, 300);
+  }
 });
