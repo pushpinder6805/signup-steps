@@ -97,7 +97,7 @@ export default apiInitializer("0.8", (api) => {
         if (group.style.display === "none") return;
 
         const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], select, textarea");
-        if (input && input.required && !input.value.trim()) {
+        if (input && !input.value.trim()) {
           missing.push(input);
         }
       });
