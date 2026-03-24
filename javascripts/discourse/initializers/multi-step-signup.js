@@ -18,6 +18,19 @@ export default apiInitializer("0.8", (api) => {
     const heading = document.querySelector("#create-account-title");
     if (heading) heading.innerText = text;
   }
+  function setSubHeading(text) {
+  let sub = document.querySelector("#create-account-subheading");
+
+  if (!sub) {
+    sub = document.createElement("div");
+    sub.id = "create-account-subheading";
+
+    const heading = document.querySelector("#create-account-title");
+    if (heading) heading.after(sub);
+  }
+
+  sub.innerText = text;
+}
 
   function updateCTAButtonText(step) {
     const label = document.querySelector(".signup-page-cta__signup .d-button-label");
