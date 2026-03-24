@@ -22,7 +22,6 @@ export default apiInitializer("0.8", (api) => {
   function updateCTAButtonText(step) {
     const label = document.querySelector(".signup-page-cta__signup .d-button-label");
     if (!label) return;
-
     label.textContent = step === 4 ? "Complete Sign Up" : "Sign Up";
   }
 
@@ -31,7 +30,6 @@ export default apiInitializer("0.8", (api) => {
 
     segments.forEach((seg, index) => {
       const stepNum = index + 1;
-
       seg.classList.remove("--active", "--complete", "--incomplete");
 
       if (stepNum < step) seg.classList.add("--complete");
@@ -97,31 +95,27 @@ export default apiInitializer("0.8", (api) => {
     }
   }
 
-  // ✅ POLICY BOX INJECTION
+  // ✅ POLICY BOX (FROM SETTINGS)
   function injectPolicyBox() {
     const field = document.querySelector(
       ".user-field-community-guidelines .controls"
     );
 
     if (!field) return;
-
-    // prevent duplicate
     if (field.querySelector(".policy-box")) return;
+
+    const text = settings.community_guidelines_text || "";
+
+    const formattedText = text
+      .replace(/\n/g, "<br>")
+      .replace(/\.\s/g, ".<br><br>");
 
     const box = document.createElement("div");
     box.className = "policy-box";
 
     box.innerHTML = `
-      <div class="policy-content">
-        <strong>Community Guidelines</strong><br><br>
-        Please read the following carefully before proceeding.<br><br>
-
-        1. Respect all members.<br>
-        2. No spam or self-promotion.<br>
-        3. Follow platform rules.<br>
-        4. Maintain professionalism.<br><br>
-
-        By continuing, you agree to comply with all rules and policies.
+      <div class="policy-box__inner">
+        ${formattedText}
       </div>
     `;
 
@@ -212,10 +206,11 @@ export default apiInitializer("0.8", (api) => {
       if (step === 1) setHeading("Create your Account");
       if (step === 2) setHeading("Enter Your Details");
       if (step === 3) setHeading("About Your Organization");
+
       if (step === 4) {
         setHeading("Participation Agreement");
 
-        // 🔥 Inject policy box when step 4 loads
+        // inject policy box
         setTimeout(injectPolicyBox, 100);
       }
 
