@@ -2,6 +2,7 @@ import { apiInitializer } from "discourse/lib/api";
 
 export default apiInitializer("0.8", (api) => {
   let initialized = false;
+  let observer = null;
 
   function safeHide(el) {
     if (!el) return;
@@ -47,6 +48,11 @@ export default apiInitializer("0.8", (api) => {
 
     const submitBtn = document.querySelector(".sign-up-button");
     if (submitBtn) submitBtn.style.display = "";
+
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
   }
 
   function getRequiredInputs(containers) {
@@ -94,12 +100,11 @@ export default apiInitializer("0.8", (api) => {
 
     initialized = true;
 
-    // ---------------- CORE FIELDS ----------------
+    // ---------------- CORE ----------------
     const emailField = document.querySelector(".create-account-email");
     const usernameField = document.querySelector(".create-account__username");
     const passwordField = document.querySelector(".create-account__password");
 
-    // create confirm password
     let confirmField = document.querySelector(".mss-password-confirm");
 
     if (!confirmField && passwordField) {
@@ -109,7 +114,7 @@ export default apiInitializer("0.8", (api) => {
 
       confirmField.innerHTML = `
         <label>Re-enter Password*</label>
-        <input type="password" class="mss-confirm-input" required />
+        <input type="password" required />
       `;
 
       passwordField.after(confirmField);
@@ -180,17 +185,32 @@ export default apiInitializer("0.8", (api) => {
     const container = document.querySelector(".user-fields");
     if (container) container.after(nav);
 
+    // ---------------- OBSERVER ----------------
+    observer = new MutationObserver(() => {
+      const submitBtn = document.querySelector(".sign-up-button");
+      if (!submitBtn) return;
+
+      if (currentStep !== 4) {
+        submitBtn.style.display = "none";
+        submitBtn.style.visibility = "hidden";
+        submitBtn.style.pointerEvents = "none";
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
     // ---------------- STEP CONTROL ----------------
     function showStep(step) {
       currentStep = step;
 
-      // headings
       if (step === 1) setHeading("Create your Account");
       if (step === 2) setHeading("Enter Your Details");
       if (step === 3) setHeading("About Your Organization");
       if (step === 4) setHeading("Participation Agreement");
 
-      // show/hide
       coreFields.forEach((el) =>
         step === 1 ? safeShow(el) : safeHide(el)
       );
@@ -210,7 +230,16 @@ export default apiInitializer("0.8", (api) => {
       const submitBtn = document.querySelector(".sign-up-button");
 
       if (submitBtn) {
-        submitBtn.style.display = step === 4 ? "" : "none";
+        if (step === 4) {
+          submitBtn.style.display = "";
+          submitBtn.style.visibility = "";
+          submitBtn.style.pointerEvents = "";
+        } else {
+          submitBtn.style.display = "none";
+          submitBtn.style.visibility = "hidden";
+          submitBtn.style.pointerEvents = "none";
+        }
+
         submitBtn.disabled = false;
       }
 
