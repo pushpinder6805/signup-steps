@@ -161,6 +161,52 @@ export default apiInitializer("0.8", (api) => {
     else field.appendChild(box);
   }
 
+  // ✅ ONLY ADDITION: PLACEHOLDERS
+  function applyPlaceholders() {
+    const map = [
+      { key: "email", text: "Email Address" },
+      { key: "username", text: "Username" },
+      { key: "password", text: "Password" },
+      { key: "re-enter password", text: "Password" },
+      { key: "first name", text: "First Name" },
+      { key: "last name", text: "Last Name" },
+      { key: "pronouns", text: "Select Pronouns" },
+      { key: "state", text: "Select a State" },
+      { key: "city", text: "Select a City" },
+      { key: "zip", text: "Zip Code" },
+      { key: "role", text: "Select your Role" },
+      { key: "organization", text: "Organization Name" },
+      { key: "type of organization", text: "Organization Type" },
+      { key: "groups your organization serves", text: "Select Groups Served by your Organization" },
+      { key: "which state(s)", text: "Select State(s)" }
+    ];
+
+    document.querySelectorAll(".user-fields .input-group, .user-field").forEach((wrap) => {
+      const label = wrap.querySelector("label");
+      if (!label) return;
+
+      const labelText = label.innerText.toLowerCase();
+
+      const input = wrap.querySelector("input, textarea");
+      if (input) {
+        const match = map.find((m) => labelText.includes(m.key));
+        if (match) input.setAttribute("placeholder", match.text);
+      }
+
+      const selectHeader = wrap.querySelector(".select-kit-header");
+      if (selectHeader) {
+        const match = map.find((m) => labelText.includes(m.key));
+        if (match) {
+          const el =
+            selectHeader.querySelector(".name") ||
+            selectHeader.querySelector(".formatted-selection");
+
+          if (el) el.innerText = match.text;
+        }
+      }
+    });
+  }
+
   function initMultiStep() {
     if (initialized) return;
 
@@ -274,7 +320,6 @@ export default apiInitializer("0.8", (api) => {
       updateCTAButtonText(step);
     }
 
-    // ✅ ONLY CHANGE: Step 1 password validation added safely
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
@@ -331,6 +376,9 @@ export default apiInitializer("0.8", (api) => {
 
       showStep(currentStep + 1);
     });
+
+    // ✅ CALL PLACEHOLDER (ONLY ADDITION)
+    setTimeout(applyPlaceholders, 300);
 
     showStep(1);
   }
