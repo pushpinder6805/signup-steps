@@ -24,7 +24,6 @@ export default apiInitializer("0.8", (api) => {
     if (heading) heading.innerText = text;
   }
 
-  // ✅ ONLY CTA button control
   function hideButtons() {
     const cta = document.querySelector(".signup-page-cta");
     if (cta) cta.style.display = "none";
@@ -52,18 +51,49 @@ export default apiInitializer("0.8", (api) => {
     }
   }
 
-  function getRequiredInputs(containers) {
+  // ---------------- VALIDATION ----------------
+
+  function getStepMissingFields(stepContainers) {
     const missing = [];
 
-    containers.forEach((wrap) => {
-      const input = wrap.querySelector("input, select, textarea");
-      if (!input) return;
+    stepContainers.forEach((wrap) => {
+      if (!wrap || wrap.style.visibility === "hidden") return;
 
-      if (input.required) {
+      // normal inputs
+      const inputs = wrap.querySelectorAll(
+        "input, select, textarea"
+      );
+
+      inputs.forEach((input) => {
+        const isRequired =
+          input.required ||
+          input.getAttribute("aria-required") === "true";
+
+        if (!isRequired) return;
+
         if (input.type === "checkbox") {
           if (!input.checked) missing.push(input);
-        } else if (!input.value.trim()) {
+        } else if (!input.value || !input.value.trim()) {
           missing.push(input);
+        }
+      });
+
+      // discourse select-kit
+      const selectKit = wrap.querySelector(".select-kit");
+
+      if (selectKit) {
+        const isRequired =
+          selectKit.getAttribute("aria-required") === "true" ||
+          wrap.innerText.includes("*");
+
+        if (!isRequired) return;
+
+        const hasValue =
+          selectKit.querySelector(".selected-name") ||
+          selectKit.querySelector(".selected-choice");
+
+        if (!hasValue) {
+          missing.push(selectKit);
         }
       }
     });
@@ -73,17 +103,27 @@ export default apiInitializer("0.8", (api) => {
 
   function highlightMissing(inputs) {
     inputs.forEach((input) => {
-      input.style.outline = "2px solid red";
+      const container =
+        input.closest(".input-group") || input;
+
+      container.style.border = "1px solid red";
 
       const clear = () => {
-        input.style.outline = "";
+        container.style.border = "";
         input.removeEventListener("input", clear);
+        input.removeEventListener("change", clear);
       };
 
       input.addEventListener("input", clear);
+      input.addEventListener("change", clear);
     });
 
-    if (inputs.length) inputs[0].focus();
+    if (inputs.length) {
+      inputs[0].scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
   }
 
   function initMultiStep() {
@@ -222,11 +262,8 @@ export default apiInitializer("0.8", (api) => {
         step === 4 ? safeShow(el) : safeHide(el)
       );
 
-      if (step === 4) {
-        showButtons();
-      } else {
-        hideButtons();
-      }
+      if (step === 4) showButtons();
+      else hideButtons();
 
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
       nextBtn.style.display = step === 4 ? "none" : "inline-flex";
@@ -243,7 +280,7 @@ export default apiInitializer("0.8", (api) => {
       if (currentStep === 3) fields = step3;
       if (currentStep === 4) fields = step4;
 
-      const missing = getRequiredInputs(fields);
+      const missing = getStepMissingFields(fields);
 
       // password match
       if (currentStep === 1) {
