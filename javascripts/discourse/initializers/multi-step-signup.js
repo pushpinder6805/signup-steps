@@ -17,12 +17,27 @@ export default apiInitializer("0.8", (api) => {
     el.style.pointerEvents = "";
   }
 
+  function setHeading(text) {
+    let heading = document.querySelector(".mss-heading");
+
+    if (!heading) {
+      heading = document.createElement("h2");
+      heading.className = "mss-heading";
+      heading.style.textAlign = "center";
+      heading.style.marginBottom = "20px";
+
+      const form = document.querySelector(".create-account");
+      if (form) form.prepend(heading);
+    }
+
+    heading.innerText = text;
+  }
+
   function cleanup() {
     initialized = false;
 
-    document
-      .querySelectorAll(".multi-step-nav")
-      .forEach((el) => el.remove());
+    document.querySelectorAll(".multi-step-nav").forEach((el) => el.remove());
+    document.querySelectorAll(".mss-heading").forEach((el) => el.remove());
 
     document
       .querySelectorAll(
@@ -39,7 +54,6 @@ export default apiInitializer("0.8", (api) => {
 
     containers.forEach((wrap) => {
       const input = wrap.querySelector("input, select, textarea");
-
       if (!input) return;
 
       if (input.required) {
@@ -80,37 +94,77 @@ export default apiInitializer("0.8", (api) => {
 
     initialized = true;
 
-    const coreFields = Array.from(
-      document.querySelectorAll(
-        ".create-account-email, .create-account__username, .create-account__password"
-      )
-    );
+    // ---------------- CORE FIELDS ----------------
+    const emailField = document.querySelector(".create-account-email");
+    const usernameField = document.querySelector(".create-account__username");
+    const passwordField = document.querySelector(".create-account__password");
 
-    // detect special fields
-    const guidelinesField = groups.find((g) =>
-      g.innerHTML.includes("community-guidelines")
-    );
+    // create confirm password
+    let confirmField = document.querySelector(".mss-password-confirm");
 
-    const privacyField = groups.find((g) =>
-      g.innerHTML.includes("privacy-policy")
-    );
+    if (!confirmField && passwordField) {
+      confirmField = document.createElement("div");
+      confirmField.className =
+        "create-account__password mss-password-confirm";
 
-    // remaining fields
-    const normalFields = groups.filter(
-      (g) => g !== guidelinesField && g !== privacyField
-    );
+      confirmField.innerHTML = `
+        <label>Re-enter Password*</label>
+        <input type="password" class="mss-confirm-input" required />
+      `;
 
-    const mid = Math.ceil(normalFields.length / 2);
-    const step2 = normalFields.slice(0, mid);
-    const step3 = normalFields.slice(mid);
+      passwordField.after(confirmField);
+    }
 
-    const step4 = [guidelinesField, privacyField].filter(Boolean);
+    const coreFields = [
+      emailField,
+      usernameField,
+      passwordField,
+      confirmField,
+    ];
+
+    // ---------------- FIELD DETECTION ----------------
+    function findField(keyword) {
+      return groups.find((g) =>
+        g.innerText.toLowerCase().includes(keyword)
+      );
+    }
+
+    const step2 = [
+      findField("first"),
+      findField("last"),
+      findField("pronoun"),
+      findField("phone"),
+      findField("state"),
+      findField("city"),
+      findField("zip"),
+    ].filter(Boolean);
+
+    const step3 = [
+      findField("role"),
+      findField("organization"),
+      findField("type"),
+      findField("groups"),
+      findField("which state"),
+    ].filter(Boolean);
+
+    const step4 = [
+      groups.find((g) =>
+        g.querySelector("[class*='community-guidelines']")
+      ),
+      groups.find((g) =>
+        g.querySelector("[class*='privacy-policy']")
+      ),
+    ].filter(Boolean);
 
     let currentStep = 1;
     const totalSteps = 4;
 
+    // ---------------- NAV ----------------
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
+    nav.style.display = "flex";
+    nav.style.justifyContent = "space-between";
+    nav.style.marginTop = "20px";
 
     const backBtn = document.createElement("button");
     backBtn.className = "btn";
@@ -126,25 +180,29 @@ export default apiInitializer("0.8", (api) => {
     const container = document.querySelector(".user-fields");
     if (container) container.after(nav);
 
+    // ---------------- STEP CONTROL ----------------
     function showStep(step) {
       currentStep = step;
 
-      // Step 1
+      // headings
+      if (step === 1) setHeading("Create your Account");
+      if (step === 2) setHeading("Enter Your Details");
+      if (step === 3) setHeading("About Your Organization");
+      if (step === 4) setHeading("Participation Agreement");
+
+      // show/hide
       coreFields.forEach((el) =>
         step === 1 ? safeShow(el) : safeHide(el)
       );
 
-      // Step 2
       step2.forEach((el) =>
         step === 2 ? safeShow(el) : safeHide(el)
       );
 
-      // Step 3
       step3.forEach((el) =>
         step === 3 ? safeShow(el) : safeHide(el)
       );
 
-      // Step 4 (ONLY legal fields)
       step4.forEach((el) =>
         step === 4 ? safeShow(el) : safeHide(el)
       );
@@ -152,33 +210,37 @@ export default apiInitializer("0.8", (api) => {
       const submitBtn = document.querySelector(".sign-up-button");
 
       if (submitBtn) {
-        submitBtn.style.display = step === totalSteps ? "" : "none";
+        submitBtn.style.display = step === 4 ? "" : "none";
         submitBtn.disabled = false;
       }
 
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
-      nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
+      nextBtn.style.display = step === 4 ? "none" : "inline-flex";
     }
 
+    // ---------------- EVENTS ----------------
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
-      let missing = [];
+      let fields = [];
 
+      if (currentStep === 1) fields = coreFields;
+      if (currentStep === 2) fields = step2;
+      if (currentStep === 3) fields = step3;
+      if (currentStep === 4) fields = step4;
+
+      const missing = getRequiredInputs(fields);
+
+      // password match check
       if (currentStep === 1) {
-        missing = getRequiredInputs(coreFields);
-      }
+        const pass = passwordField.querySelector("input")?.value;
+        const confirm =
+          confirmField.querySelector("input")?.value;
 
-      if (currentStep === 2) {
-        missing = getRequiredInputs(step2);
-      }
-
-      if (currentStep === 3) {
-        missing = getRequiredInputs(step3);
-      }
-
-      if (currentStep === 4) {
-        missing = getRequiredInputs(step4);
+        if (pass !== confirm) {
+          alert("Passwords do not match");
+          return;
+        }
       }
 
       if (missing.length) {
