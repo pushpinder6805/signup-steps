@@ -96,9 +96,18 @@ export default apiInitializer("0.8", (api) => {
       page2Groups.forEach((group) => {
         if (group.style.display === "none") return;
 
-        const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], select, textarea");
+        const label = group.querySelector("label");
+        const isRequired = label && label.textContent.includes("*");
+
+        if (!isRequired) return;
+
+        const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], textarea");
+        const select = group.querySelector("select");
+
         if (input && !input.value.trim()) {
           missing.push(input);
+        } else if (select && (!select.value || select.value === "")) {
+          missing.push(select);
         }
       });
     }
@@ -107,13 +116,20 @@ export default apiInitializer("0.8", (api) => {
       page3Groups.forEach((group) => {
         if (group.style.display === "none") return;
 
-        const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], select, textarea");
-        if (input && input.required && !input.value.trim()) {
-          missing.push(input);
-        }
+        const label = group.querySelector("label");
+        const isRequired = label && label.textContent.includes("*");
 
+        if (!isRequired) return;
+
+        const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], textarea");
+        const select = group.querySelector("select");
         const checkbox = group.querySelector("input[type=checkbox]");
-        if (checkbox && checkbox.required && !checkbox.checked) {
+
+        if (input && !input.value.trim()) {
+          missing.push(input);
+        } else if (select && (!select.value || select.value === "")) {
+          missing.push(select);
+        } else if (checkbox && !checkbox.checked) {
           missing.push(checkbox);
         }
       });
