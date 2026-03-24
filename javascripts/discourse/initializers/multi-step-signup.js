@@ -41,7 +41,10 @@ export default apiInitializer("0.8", (api) => {
 
     document
       .querySelectorAll(
-        ".user-fields .input-group, .create-account-email, .create-account__username, .create-account__password"
+        ".user-fields .input-group,
+         .create-account-email,
+         .create-account__username,
+         .create-account__password"
       )
       .forEach((el) => safeShow(el));
 
@@ -51,7 +54,7 @@ export default apiInitializer("0.8", (api) => {
     }
   }
 
-  // ---------------- VALIDATION ----------------
+  // -------- VALIDATION --------
 
   function getStepMissingFields(stepContainers) {
     const missing = [];
@@ -61,12 +64,10 @@ export default apiInitializer("0.8", (api) => {
 
       const label = wrap.querySelector("label");
       const isRequired = label && label.innerText.includes("*");
-
       if (!isRequired) return;
 
       let hasValue = false;
 
-      // -------- inputs --------
       const inputs = wrap.querySelectorAll("input, textarea");
 
       inputs.forEach((input) => {
@@ -77,7 +78,6 @@ export default apiInitializer("0.8", (api) => {
         }
       });
 
-      // -------- select-kit --------
       const selectKit = wrap.querySelector(".select-kit");
 
       if (selectKit) {
@@ -88,10 +88,7 @@ export default apiInitializer("0.8", (api) => {
         if (selected) hasValue = true;
       }
 
-      // -------- final --------
-      if (!hasValue) {
-        missing.push(wrap);
-      }
+      if (!hasValue) missing.push(wrap);
     });
 
     return missing;
@@ -198,18 +195,13 @@ export default apiInitializer("0.8", (api) => {
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
     nav.style.display = "flex";
-    nav.style.justifyContent = "space-between";
+    nav.style.justifyContent = "center";
     nav.style.marginTop = "20px";
-
-    const backBtn = document.createElement("button");
-    backBtn.className = "btn";
-    backBtn.innerText = "Back";
 
     const nextBtn = document.createElement("button");
     nextBtn.className = "btn btn-primary";
     nextBtn.innerText = "Continue";
 
-    nav.appendChild(backBtn);
     nav.appendChild(nextBtn);
 
     const container = document.querySelector(".user-fields");
@@ -260,7 +252,6 @@ export default apiInitializer("0.8", (api) => {
       if (step === 4) showButtons();
       else hideButtons();
 
-      backBtn.style.display = step === 1 ? "none" : "inline-flex";
       nextBtn.style.display = step === 4 ? "none" : "inline-flex";
     }
 
@@ -268,7 +259,7 @@ export default apiInitializer("0.8", (api) => {
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
-      // Step 1 (manual validation)
+      // Step 1 validation
       if (currentStep === 1) {
         const emailInput = emailField.querySelector("input");
         const usernameInput = usernameField.querySelector("input");
@@ -301,7 +292,7 @@ export default apiInitializer("0.8", (api) => {
         return;
       }
 
-      // Step 2–4 (dynamic validation)
+      // Step 2–4 validation
       let fields = [];
       if (currentStep === 2) fields = step2;
       if (currentStep === 3) fields = step3;
@@ -317,11 +308,6 @@ export default apiInitializer("0.8", (api) => {
       if (currentStep < totalSteps) {
         showStep(currentStep + 1);
       }
-    });
-
-    backBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (currentStep > 1) showStep(currentStep - 1);
     });
 
     showStep(1);
