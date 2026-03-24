@@ -302,9 +302,9 @@ export default apiInitializer("0.8", (api) => {
       /* ✅ ONLY MODIFIED BLOCK */
       confirmField.innerHTML =
         `<label>Re-enter Password*</label>
-         <div class="password-wrapper">
+         <div class="password-wrapper confirm-password-wrapper">
            <input type="password" required />
-           <button class="btn no-text btn-icon btn-transparent toggle-password-mask" type="button">
+           <button class="btn no-text btn-icon btn-transparent toggle-password-mask confirm-password-toggle" type="button">
              <svg class="fa d-icon d-icon-far-eye svg-icon fa-width-auto svg-string" width="1em" height="1em">
                <use href="#far-eye"></use>
              </svg>
