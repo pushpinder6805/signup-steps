@@ -80,6 +80,26 @@ export default apiInitializer("0.8", (api) => {
     });
   }
 
+  function hasSelectKitValue(group) {
+    const selectKit = group.querySelector(".select-kit");
+    if (!selectKit) return true;
+
+    const hasChoice = group.querySelector(".select-kit-header .choice, .formatted-selection .choice");
+    if (hasChoice) return true;
+
+    const selectKitDetails = group.querySelector("details.select-kit");
+    if (selectKitDetails) {
+      const bodyId = selectKitDetails.id + "-body";
+      const body = document.getElementById(bodyId);
+      if (body) {
+        const checked = body.querySelector(".select-kit-row[aria-checked='true']");
+        if (checked) return true;
+      }
+    }
+
+    return false;
+  }
+
   function getVisibleRequiredFields(step, coreFields, page2Groups, page3Groups) {
     const missing = [];
 
@@ -103,11 +123,14 @@ export default apiInitializer("0.8", (api) => {
 
         const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], textarea");
         const select = group.querySelector("select");
+        const selectKit = group.querySelector(".select-kit");
 
         if (input && !input.value.trim()) {
           missing.push(input);
         } else if (select && (!select.value || select.value === "")) {
           missing.push(select);
+        } else if (selectKit && !hasSelectKitValue(group)) {
+          missing.push(selectKit);
         }
       });
     }
@@ -123,12 +146,15 @@ export default apiInitializer("0.8", (api) => {
 
         const input = group.querySelector("input[type=text], input[type=email], input[type=number], input[type=url], textarea");
         const select = group.querySelector("select");
+        const selectKit = group.querySelector(".select-kit");
         const checkbox = group.querySelector("input[type=checkbox]");
 
         if (input && !input.value.trim()) {
           missing.push(input);
         } else if (select && (!select.value || select.value === "")) {
           missing.push(select);
+        } else if (selectKit && !hasSelectKitValue(group)) {
+          missing.push(selectKit);
         } else if (checkbox && !checkbox.checked) {
           missing.push(checkbox);
         }
@@ -653,6 +679,8 @@ export default apiInitializer("0.8", (api) => {
         checkStep1Validation();
       } else if (step === 2) {
         checkStep2Validation();
+      } else if (step === 3) {
+        checkStep3Validation();
       }
     }
 
@@ -679,6 +707,57 @@ export default apiInitializer("0.8", (api) => {
           if (currentStep === 2) {
             checkStep2Validation();
           }
+        });
+      }
+
+      const selectKit = group.querySelector(".select-kit");
+      if (selectKit) {
+        const observer = new MutationObserver(() => {
+          if (currentStep === 2) {
+            checkStep2Validation();
+          }
+        });
+        observer.observe(selectKit, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["aria-checked"],
+        });
+      }
+    });
+
+    function checkStep3Validation() {
+      const missing = getVisibleRequiredFields(3, coreFields, page2Groups, page3Groups);
+      completeBtn.disabled = missing.length > 0;
+    }
+
+    page3Groups.forEach((group) => {
+      const input = group.querySelector("input, select, textarea");
+      if (input) {
+        input.addEventListener("input", () => {
+          if (currentStep === 3) {
+            checkStep3Validation();
+          }
+        });
+        input.addEventListener("change", () => {
+          if (currentStep === 3) {
+            checkStep3Validation();
+          }
+        });
+      }
+
+      const selectKit = group.querySelector(".select-kit");
+      if (selectKit) {
+        const observer = new MutationObserver(() => {
+          if (currentStep === 3) {
+            checkStep3Validation();
+          }
+        });
+        observer.observe(selectKit, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["aria-checked"],
         });
       }
     });
