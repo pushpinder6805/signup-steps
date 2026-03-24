@@ -1,3 +1,9 @@
+login-fullpage .login-left-side, .signup-fullpage .login-left-side, .invites-show .login-left-side, .password-reset-page .login-left-side {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 1000px !important;
+}
+
 /* Increase overall container width */
 .user-field-community-guidelines .controls {
   max-width: 1000px;
