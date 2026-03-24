@@ -345,6 +345,11 @@ export default apiInitializer("0.8", (api) => {
         gap: 6px;
       }
 
+      .multi-step-nav .btn[style*="display: none"],
+      .multi-step-nav .btn[style*="display:none"] {
+        display: none !important;
+      }
+
       .signup-page-cta {
         display: none !important;
       }
