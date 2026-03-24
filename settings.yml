@@ -1,7 +1,35 @@
 community_guidelines_text:
-  default: "Welcome to our community. By joining, you agree to treat all members with respect and kindness. Harassment, hate speech, and spam are not tolerated. Posts must be relevant to the topic at hand. Keep discussions constructive and on-topic. Share knowledge freely and give credit where it is due. Respect the privacy of others and do not share personal information without consent. Follow all moderator instructions. Violations may result in warnings, suspensions, or permanent bans. These guidelines exist to keep this a safe and welcoming space for everyone."
-  type: "string"
+  default: |
+    Welcome to our community.
+
+    By joining, you agree to treat all members with respect and kindness.
+
+    Harassment, hate speech, and spam are not tolerated.
+
+    Posts must be relevant to the topic at hand.
+
+    Keep discussions constructive and on-topic.
+
+    Share knowledge freely and give credit where it is due.
+
+    Respect the privacy of others and do not share personal information without consent.
+
+    Follow all moderator instructions.
+
+    Violations may result in warnings, suspensions, or permanent bans.
+
+    These guidelines exist to keep this a safe and welcoming space for everyone.
+  type: text
 
 privacy_policy_text:
-  default: "By creating an account and using our platform, you agree to the collection and use of your information as described here. We collect information you provide during registration such as your name, email address, and organisation details. This is used to create and manage your account, communicate with you, and improve our services. We may also collect usage data including log data, device information, and interaction patterns to help us understand how the platform is used. We do not sell or transfer your personal information to third parties without your consent, except where required by law or to trusted service providers who help operate the platform. We take appropriate security measures to protect your data. You have the right to access, correct, or delete your personal data at any time by contacting us through the platform. We may update this policy periodically and will notify you of significant changes."
-  type: "string"
+  default: |
+    By creating an account and using our platform, you agree to the collection and use of your information.
+
+    We collect data such as name, email, and organization details.
+
+    This is used to manage your account and improve services.
+
+    We do not sell your data to third parties.
+
+    You can request access or deletion of your data anytime.
+  type: text
