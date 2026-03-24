@@ -17,18 +17,12 @@
   justify-content: center;
 }
 
-.signup-progress-bar__step {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .signup-progress-bar__circle {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--primary-low, #d0d0d0);
-  border: 1px solid var(--primary-low, #d0d0d0);
+  background: transparent;
+  border: 2px solid var(--primary-low, #d0d0d0);
   transition: background 0.3s, border-color 0.3s;
 }
 
@@ -52,7 +46,7 @@
   color: var(--primary, #222);
   font-size: 1.85em;
   font-weight: 600;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 #create-account-title::after {
@@ -97,10 +91,7 @@
 }
 
 .create-account-email,
-.create-account__username {
-  margin-bottom: 20px;
-}
-
+.create-account__username,
 .create-account__password {
   margin-bottom: 20px;
 }
@@ -108,6 +99,7 @@
 .multi-step-nav {
   display: flex;
   justify-content: center;
+  gap: 12px;
   margin-top: 24px;
   padding-top: 0;
   border-top: none;
@@ -131,11 +123,22 @@
   background: var(--tertiary-hover, #006ba8);
 }
 
-.multi-step-nav .btn {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+.multi-step-nav .mss-back-btn {
+  background: transparent;
+  color: var(--primary-medium, #666);
+  border: 1px solid var(--primary-low, #d0d0d0);
+  padding: 14px 24px;
+  border-radius: 24px;
+  font-size: 1em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.multi-step-nav .mss-back-btn:hover {
+  background: var(--primary-very-low, #f5f5f5);
 }
 
 .mss-hidden {
@@ -150,7 +153,6 @@
   background: var(--success-hover, #178f45) !important;
 }
 
-
 .login-welcome-header .tip,
 .login-welcome-header + .tip {
   display: none !important;
@@ -163,29 +165,33 @@
   pointer-events: none !important;
 }
 
+// ── Step visibility ─────────────────────────────────────────────────────────
+// Default: all step sections hidden
 .mss-step-1,
 .mss-step-2,
 .mss-step-3,
 .mss-step-4 {
-  display: none;
+  display: none !important;
 }
 
+// Show only the active step's elements
 .mss-on-step-1 .mss-step-1 {
-  display: block;
+  display: block !important;
 }
 
 .mss-on-step-2 .mss-step-2 {
-  display: block;
+  display: block !important;
 }
 
 .mss-on-step-3 .mss-step-3 {
-  display: block;
+  display: block !important;
 }
 
 .mss-on-step-4 .mss-step-4 {
-  display: block;
+  display: block !important;
 }
 
+// ── Legal text boxes ────────────────────────────────────────────────────────
 .mss-legal-text-box {
   border: 1px solid var(--primary-low, #d0d0d0);
   border-radius: 6px;
@@ -196,12 +202,8 @@
   line-height: 1.65;
   color: var(--primary, #222);
   background: var(--secondary, #fff);
-  margin-bottom: 8px;
+  margin-bottom: 16px;
   white-space: pre-wrap;
-}
-
-.mss-legal-text-box.mss-hidden {
-  display: none;
 }
 
 .mss-legal-text-box::-webkit-scrollbar {
