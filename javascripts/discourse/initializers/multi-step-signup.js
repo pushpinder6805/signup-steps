@@ -7,7 +7,7 @@ export default apiInitializer("0.8", (api) => {
   function cleanup() {
     initialized = false;
     document
-      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-progress-bar-wrap, .mss-legal-text-box, .mss-hidden")
+      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-progress-bar-wrap, .mss-legal-text-box, .mss-hidden, .mss-required-text, .create-account__password-confirm")
       .forEach((el) => el.remove());
     document
       .querySelectorAll(
@@ -156,65 +156,188 @@ export default apiInitializer("0.8", (api) => {
       )
     );
 
+    const passwordField = document.querySelector(".create-account__password");
+    let passwordConfirmField = null;
+
+    if (passwordField) {
+      passwordConfirmField = document.createElement("div");
+      passwordConfirmField.className = "create-account__password create-account__password-confirm";
+
+      const label = document.createElement("label");
+      label.textContent = "Re-enter Password*";
+
+      const inputWrapper = document.createElement("div");
+      inputWrapper.style.position = "relative";
+
+      const input = document.createElement("input");
+      input.type = "password";
+      input.required = true;
+      input.placeholder = "Password";
+      input.className = "mss-password-confirm-input";
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.type = "button";
+      toggleBtn.className = "mss-password-toggle";
+      toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+      toggleBtn.style.cssText = `
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        color: var(--primary-medium, #666);
+      `;
+
+      toggleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        input.type = input.type === "password" ? "text" : "password";
+      });
+
+      inputWrapper.appendChild(input);
+      inputWrapper.appendChild(toggleBtn);
+      passwordConfirmField.appendChild(label);
+      passwordConfirmField.appendChild(inputWrapper);
+
+      passwordField.after(passwordConfirmField);
+      coreFields.push(passwordConfirmField);
+    }
+
     const styleEl = document.createElement("style");
     styleEl.className = "multi-step-style";
     styleEl.textContent = `
       .mss-progress-bar-wrap {
-        margin-bottom: 20px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: center;
       }
       .signup-progress-bar {
         display: flex;
         align-items: center;
-        width: 100%;
-        gap: 0;
+        gap: 8px;
+        justify-content: center;
       }
       .signup-progress-bar__segment {
         display: flex;
         align-items: center;
-        flex: 1;
-        position: relative;
-      }
-      .signup-progress-bar__segment::after {
-        content: '';
-        flex: 1;
-        height: 2px;
-        background: var(--primary-low, #d0d0d0);
-        transition: background 0.3s;
-      }
-      .signup-progress-bar__segment:last-child::after {
-        display: none;
-      }
-      .signup-progress-bar__segment.--complete::after {
-        background: var(--tertiary, #0088cc);
+        justify-content: center;
       }
       .signup-progress-bar__step {
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
       }
       .signup-progress-bar__circle {
-        width: 14px;
-        height: 14px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
         background: var(--primary-low, #d0d0d0);
-        border: 2px solid var(--primary-low, #d0d0d0);
-        transition: background 0.3s, border-color 0.3s, transform 0.2s;
+        border: 1px solid var(--primary-low, #d0d0d0);
+        transition: background 0.3s, border-color 0.3s;
       }
       .signup-progress-bar__segment.--active .signup-progress-bar__circle {
-        background: var(--tertiary, #0088cc);
-        border-color: var(--tertiary, #0088cc);
-        transform: scale(1.25);
+        background: var(--tertiary, #5fa1c7);
+        border-color: var(--tertiary, #5fa1c7);
       }
       .signup-progress-bar__segment.--complete .signup-progress-bar__circle {
-        background: var(--tertiary, #0088cc);
-        border-color: var(--tertiary, #0088cc);
+        background: var(--tertiary, #5fa1c7);
+        border-color: var(--tertiary, #5fa1c7);
       }
       .signup-progress-bar__segment.--incomplete .signup-progress-bar__circle {
-        background: var(--primary-low, #d0d0d0);
+        background: transparent;
         border-color: var(--primary-low, #d0d0d0);
       }
-      .multi-step-nav .btn { display: inline-flex !important; align-items: center; gap: 6px; }
+
+      #create-account-title {
+        text-align: center;
+        color: var(--primary, #222);
+        font-size: 1.85em;
+        font-weight: 600;
+        margin-bottom: 24px;
+      }
+
+      .mss-required-text {
+        text-align: center;
+        color: var(--primary-medium, #666);
+        font-size: 0.95em;
+        margin-bottom: 28px;
+      }
+
+      .create-account-email label,
+      .create-account__username label,
+      .create-account__password label {
+        color: var(--primary, #222);
+        font-weight: 600;
+        font-size: 0.95em;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      .create-account-email input,
+      .create-account__username input,
+      .create-account__password input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--primary-low, #d0d0d0);
+        border-radius: 24px;
+        font-size: 1em;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+      }
+
+      .create-account-email input:focus,
+      .create-account__username input:focus,
+      .create-account__password input:focus {
+        outline: none;
+        border-color: var(--tertiary, #0088cc);
+      }
+
+      .create-account-email,
+      .create-account__username {
+        margin-bottom: 20px;
+      }
+
+      .create-account__password {
+        margin-bottom: 20px;
+      }
+
+      .multi-step-nav {
+        display: flex;
+        justify-content: center;
+        margin-top: 24px;
+        padding-top: 0;
+        border-top: none;
+      }
+
+      .multi-step-nav .btn-primary {
+        background: var(--primary-low-mid, #c8c8c8);
+        color: var(--primary, #222);
+        border: none;
+        padding: 14px 0;
+        border-radius: 24px;
+        font-size: 1em;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+        width: 100%;
+        max-width: 600px;
+      }
+
+      .multi-step-nav .btn-primary:hover {
+        background: var(--primary-low, #d8d8d8);
+      }
+
+      .multi-step-nav .btn {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
       .mss-legal-text-box {
         border: 1px solid var(--primary-low, #d0d0d0);
         border-radius: 6px;
@@ -272,34 +395,26 @@ export default apiInitializer("0.8", (api) => {
 
     const { barWrap, segments } = buildProgressBar(totalSteps);
 
+    const requiredText = document.createElement("div");
+    requiredText.className = "mss-required-text";
+    requiredText.textContent = "Fields marked with * are required.";
+
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
-    nav.style.cssText = `
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid var(--primary-low, #e8e8e8);
-      gap: 12px;
-    `;
-
-    const btnGroup = document.createElement("div");
-    btnGroup.style.cssText = `display: flex; gap: 8px;`;
 
     const backBtn = document.createElement("button");
     backBtn.type = "button";
     backBtn.className = "btn";
     backBtn.innerHTML = `&#8592; Back`;
+    backBtn.style.cssText = `margin-right: auto;`;
 
     const nextBtn = document.createElement("button");
     nextBtn.type = "button";
     nextBtn.className = "btn btn-primary";
-    nextBtn.innerHTML = `Continue &#8594;`;
+    nextBtn.innerHTML = `Continue`;
 
-    btnGroup.appendChild(backBtn);
-    btnGroup.appendChild(nextBtn);
-    nav.appendChild(btnGroup);
+    nav.appendChild(backBtn);
+    nav.appendChild(nextBtn);
 
     const userFieldsEl = document.querySelector(".user-fields");
     const formEl = document.querySelector(".create-account");
@@ -316,10 +431,13 @@ export default apiInitializer("0.8", (api) => {
 
     if (headingContainer) {
       headingContainer.before(barWrap);
+      headingContainer.after(requiredText);
     } else if (formEl) {
       formEl.before(barWrap);
+      formEl.before(requiredText);
     } else if (userFieldsEl) {
       userFieldsEl.before(barWrap);
+      userFieldsEl.before(requiredText);
     }
 
     if (userFieldsEl) {
@@ -379,6 +497,22 @@ export default apiInitializer("0.8", (api) => {
       if (missing.length) {
         highlightMissing(missing);
         return;
+      }
+
+      if (currentStep === 1 && passwordConfirmField) {
+        const passwordInput = passwordField.querySelector("input");
+        const confirmInput = passwordConfirmField.querySelector("input");
+        if (passwordInput && confirmInput && passwordInput.value !== confirmInput.value) {
+          confirmInput.style.outline = "2px solid var(--danger, #c00)";
+          confirmInput.style.borderRadius = "4px";
+          confirmInput.focus();
+          const clearOutline = () => {
+            confirmInput.style.outline = "";
+            confirmInput.removeEventListener("input", clearOutline);
+          };
+          confirmInput.addEventListener("input", clearOutline);
+          return;
+        }
       }
 
       if (currentStep < totalSteps) showStep(currentStep + 1);
