@@ -69,12 +69,14 @@ export default apiInitializer("0.8", (api) => {
     { key: "which state(s)", text: "Select State(s)" },
   ];
 
-  const placeholderMap = new Map(
-    placeholderConfig.map(({ key, text }) => [
-      normalizePlaceholderKey(key),
-      text,
-    ])
+  const placeholderEntries = placeholderConfig.map(({ key, text }) => [
+    normalizePlaceholderKey(key),
+    text,
+  ]);
+  const placeholderEntriesByLength = [...placeholderEntries].sort(
+    (a, b) => b[0].length - a[0].length
   );
+  const placeholderMap = new Map(placeholderEntries);
 
   function getPlaceholderText(labelText) {
     const normalized = normalizePlaceholderKey(labelText);
@@ -82,11 +84,98 @@ export default apiInitializer("0.8", (api) => {
 
     if (placeholderMap.has(normalized)) return placeholderMap.get(normalized);
 
-    for (const [key, text] of placeholderMap.entries()) {
+    for (const [key, text] of placeholderEntriesByLength) {
       if (normalized.includes(key)) return text;
     }
 
     return "";
+  }
+
+  function setSelectKitPlaceholder(selectKit, text) {
+    const header = selectKit.querySelector(".select-kit-header");
+    if (!header) return;
+
+    const nameNode =
+      header.querySelector(".selected-name .name") ||
+      header.querySelector(".selected-name");
+    if (!nameNode) return;
+
+    const selectEl = selectKit.querySelector("select");
+
+    function getSelectedLabels() {
+      if (selectEl) {
+        const opts = Array.from(selectEl.selectedOptions || []);
+        const labels = opts
+          .filter((opt) => opt && opt.value && opt.value.trim() !== "")
+          .map((opt) => (opt.textContent || "").trim())
+          .filter(Boolean);
+
+        if (labels.length) return labels;
+      }
+
+      const selectedChoices = Array.from(
+        selectKit.querySelectorAll(".selected-choice")
+      )
+        .map((el) => (el.textContent || "").trim())
+        .filter(Boolean);
+
+      if (selectedChoices.length) return selectedChoices;
+
+      const selectedRow =
+        selectKit.querySelector(".select-kit-row.is-selected") ||
+        selectKit.querySelector(".select-kit-row[aria-selected='true']");
+      const rowLabel =
+        selectedRow?.querySelector(".name")?.textContent?.trim() ||
+        selectedRow?.textContent?.trim();
+
+      return rowLabel ? [rowLabel] : [];
+    }
+
+    let rafId = null;
+    function scheduleSync() {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        sync();
+      });
+    }
+
+    function sync() {
+      const labels = getSelectedLabels();
+
+      selectKit.setAttribute("data-placeholder", text);
+      header.setAttribute("data-placeholder", text);
+
+      if (!labels.length) {
+        nameNode.textContent = text;
+        return;
+      }
+
+      if (selectEl && selectEl.multiple) {
+        nameNode.textContent = labels.join(", ");
+      } else {
+        nameNode.textContent = labels[0];
+      }
+    }
+
+    scheduleSync();
+
+    if (selectEl && !selectEl.getAttribute("data-mss-sync")) {
+      selectEl.setAttribute("data-mss-sync", "true");
+      selectEl.addEventListener("change", scheduleSync);
+      selectEl.addEventListener("input", scheduleSync);
+    }
+
+    if (!selectKit.getAttribute("data-mss-observer")) {
+      selectKit.setAttribute("data-mss-observer", "true");
+      const observer = new MutationObserver(scheduleSync);
+      observer.observe(selectKit, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ["data-value", "class", "aria-selected"],
+      });
+    }
   }
 
   function applyPlaceholders() {
@@ -123,8 +212,7 @@ export default apiInitializer("0.8", (api) => {
 
       const selectKit = wrap.querySelector(".select-kit");
       if (selectKit) {
-        const header = selectKit.querySelector(".select-kit-header");
-        if (header) header.setAttribute("data-placeholder", text);
+        setSelectKitPlaceholder(selectKit, text);
       }
     });
   }
