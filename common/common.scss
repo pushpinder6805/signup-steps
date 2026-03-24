@@ -1,3 +1,39 @@
+/* Increase overall container width */
+.user-field-community-guidelines .controls {
+  max-width: 1000px;
+  width: 100%;
+}
+
+/* Main policy box */
+.user-field-community-guidelines .policy-box {
+  width: 1000px;
+  max-width: 100%;
+  height: 260px;
+
+  border-radius: 16px;
+  border: 1px solid #464653;
+
+  padding: 20px;
+  margin-bottom: 20px;
+
+  box-sizing: border-box;
+}
+
+/* Inner content */
+.user-field-community-guidelines .policy-box__inner {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto; /* scroll if content exceeds */
+}
+
+/* Optional: spacing between elements */
+.user-field-community-guidelines .controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+//policy boxes//
+
 .confirm-password-wrapper .confirm-password-toggle {
   right: 0px !important;
   top: -40% !important;
