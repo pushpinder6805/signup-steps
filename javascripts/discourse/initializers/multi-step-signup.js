@@ -262,6 +262,11 @@ export default apiInitializer("0.8", (api) => {
         margin-bottom: 24px;
       }
 
+      #create-account-title::after {
+        display: none !important;
+        content: none !important;
+      }
+
       .mss-required-text {
         text-align: center;
         color: var(--primary-medium, #666);
