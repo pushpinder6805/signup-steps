@@ -19,11 +19,12 @@ export default apiInitializer("0.8", (api) => {
     document.querySelectorAll(".signup-progress-bar").forEach((el) => {
       el.style.display = "";
     });
-    document.querySelectorAll(".sign-up-button").forEach((btn) => {
-      btn.style.display = "";
-      btn.disabled = false;
-      btn.removeAttribute("disabled");
-    });
+    const orphanedSubmit = document.querySelector(".multi-step-nav .sign-up-button");
+    if (orphanedSubmit) {
+      orphanedSubmit.style.display = "";
+      const footer = document.querySelector(".modal-footer, .create-account .actions, .create-account");
+      if (footer) footer.appendChild(orphanedSubmit);
+    }
     const signupCta = document.querySelector(".signup-page-cta");
     if (signupCta) signupCta.style.display = "";
   }
@@ -408,6 +409,11 @@ export default apiInitializer("0.8", (api) => {
     nav.appendChild(backBtn);
     nav.appendChild(nextBtn);
 
+    const nativeSubmitBtn = document.querySelector(".sign-up-button");
+    if (nativeSubmitBtn) {
+      nav.appendChild(nativeSubmitBtn);
+    }
+
     const userFieldsEl = document.querySelector(".user-fields");
     const formEl = document.querySelector(".create-account");
 
@@ -484,11 +490,10 @@ export default apiInitializer("0.8", (api) => {
       backBtn.style.display = step === 1 ? "none" : "inline-flex";
       nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
 
-      document.querySelectorAll(".sign-up-button").forEach((btn) => {
-        btn.style.display = step === totalSteps ? "" : "none";
-        btn.disabled = false;
-        btn.removeAttribute("disabled");
-      });
+      const nativeBtnInNav = nav.querySelector(".sign-up-button");
+      if (nativeBtnInNav) {
+        nativeBtnInNav.style.display = step === totalSteps ? "" : "none";
+      }
 
       updateProgressBar(segments, step);
     }
