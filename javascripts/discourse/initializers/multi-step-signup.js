@@ -566,6 +566,20 @@ export default apiInitializer("0.8", (api) => {
       }
     }
 
+    function checkStep2Validation() {
+      const missing = getVisibleRequiredFields(2, coreFields, page2Groups, page3Groups);
+
+      if (missing.length === 0) {
+        nextBtn.disabled = false;
+        nextBtn.style.background = "#28a745";
+        nextBtn.style.cursor = "pointer";
+      } else {
+        nextBtn.disabled = true;
+        nextBtn.style.background = "#ccc";
+        nextBtn.style.cursor = "not-allowed";
+      }
+    }
+
     function showStep(step) {
       currentStep = step;
 
@@ -621,6 +635,8 @@ export default apiInitializer("0.8", (api) => {
 
       if (step === 1) {
         checkStep1Validation();
+      } else if (step === 2) {
+        checkStep2Validation();
       }
     }
 
@@ -630,6 +646,22 @@ export default apiInitializer("0.8", (api) => {
         input.addEventListener("input", () => {
           if (currentStep === 1) {
             checkStep1Validation();
+          }
+        });
+      }
+    });
+
+    page2Groups.forEach((group) => {
+      const input = group.querySelector("input, select, textarea");
+      if (input) {
+        input.addEventListener("input", () => {
+          if (currentStep === 2) {
+            checkStep2Validation();
+          }
+        });
+        input.addEventListener("change", () => {
+          if (currentStep === 2) {
+            checkStep2Validation();
           }
         });
       }
