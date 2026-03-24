@@ -6,29 +6,15 @@ export default apiInitializer("0.8", (api) => {
 
   function cleanup() {
     initialized = false;
+    document.body.classList.remove("mss-on-step-1", "mss-on-step-2", "mss-on-step-3");
     document
-      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-progress-bar-wrap, .mss-legal-text-box, .mss-hidden, .mss-required-text, .create-account__password-confirm")
+      .querySelectorAll(".multi-step-nav, .multi-step-style, .mss-progress-bar-wrap, .mss-legal-text-box, .mss-required-text, .create-account__password-confirm")
       .forEach((el) => el.remove());
     document
-      .querySelectorAll(
-        ".user-fields .input-group, .create-account-email, .create-account__username, .create-account__password"
-      )
+      .querySelectorAll(".mss-step-1, .mss-step-2, .mss-step-3")
       .forEach((el) => {
-        el.style.display = "";
+        el.classList.remove("mss-step-1", "mss-step-2", "mss-step-3");
       });
-    document.querySelectorAll(".signup-progress-bar").forEach((el) => {
-      el.style.display = "";
-    });
-    const submitBtn = document.querySelector(".sign-up-button");
-    if (submitBtn) {
-      submitBtn.style.display = "";
-      submitBtn.style.position = "";
-      submitBtn.style.left = "";
-      submitBtn.style.opacity = "";
-      submitBtn.style.pointerEvents = "";
-    }
-    const signupCta = document.querySelector(".signup-page-cta");
-    if (signupCta) signupCta.style.display = "";
   }
 
   function buildTextBox(bodyText) {
@@ -310,8 +296,7 @@ export default apiInitializer("0.8", (api) => {
         gap: 6px;
       }
 
-      .multi-step-nav .btn[style*="display: none"],
-      .multi-step-nav .btn[style*="display:none"] {
+      .mss-hidden {
         display: none !important;
       }
 
@@ -330,6 +315,31 @@ export default apiInitializer("0.8", (api) => {
       .login-welcome-header .tip,
       .login-welcome-header + .tip {
         display: none !important;
+      }
+
+      .sign-up-button {
+        position: absolute !important;
+        left: -9999px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      .mss-step-1,
+      .mss-step-2,
+      .mss-step-3 {
+        display: none;
+      }
+
+      .mss-on-step-1 .mss-step-1 {
+        display: block;
+      }
+
+      .mss-on-step-2 .mss-step-2 {
+        display: block;
+      }
+
+      .mss-on-step-3 .mss-step-3 {
+        display: block;
       }
 
       .mss-legal-text-box {
@@ -382,10 +392,6 @@ export default apiInitializer("0.8", (api) => {
     } else if (userFieldsContainer) {
       userFieldsContainer.appendChild(privacyTextBox);
     }
-
-    page3Groups.forEach((g) => {
-      g.style.display = "none";
-    });
 
     const { barWrap, segments } = buildProgressBar(totalSteps);
 
@@ -463,6 +469,9 @@ export default apiInitializer("0.8", (api) => {
       userFieldsEl.after(nav);
     }
 
+    coreFields.forEach((f) => f.classList.add("mss-step-1"));
+    page2Groups.forEach((g) => g.classList.add("mss-step-2"));
+    page3Groups.forEach((g) => g.classList.add("mss-step-3"));
 
     function showStep(step) {
       currentStep = step;
@@ -478,22 +487,10 @@ export default apiInitializer("0.8", (api) => {
         }
       }
 
-      coreFields.forEach((f) => {
-        f.style.display = step === 1 ? "" : "none";
-      });
+      document.body.classList.remove("mss-on-step-1", "mss-on-step-2", "mss-on-step-3");
+      document.body.classList.add(`mss-on-step-${step}`);
 
-      groups.forEach((g) => {
-        g.style.display = "none";
-      });
-      if (step === 2) {
-        page2Groups.forEach((g) => {
-          g.style.display = "";
-        });
-      }
       if (step === 3) {
-        page3Groups.forEach((g) => {
-          g.style.display = "";
-        });
         guidelinesTextBox.textContent = getGuidelinesText();
         privacyTextBox.textContent = getPrivacyText();
         guidelinesTextBox.classList.remove("mss-hidden");
@@ -503,17 +500,9 @@ export default apiInitializer("0.8", (api) => {
         privacyTextBox.classList.add("mss-hidden");
       }
 
-      backBtn.style.display = "none";
-      nextBtn.style.display = step === totalSteps ? "none" : "inline-flex";
-      completeBtn.style.display = step === totalSteps ? "inline-flex" : "none";
-
-      const submitBtn = document.querySelector(".sign-up-button");
-      if (submitBtn) {
-        submitBtn.style.position = "absolute";
-        submitBtn.style.left = "-9999px";
-        submitBtn.style.opacity = "0";
-        submitBtn.style.pointerEvents = "none";
-      }
+      backBtn.classList.toggle("mss-hidden", step === 1);
+      nextBtn.classList.toggle("mss-hidden", step === totalSteps);
+      completeBtn.classList.toggle("mss-hidden", step !== totalSteps);
 
       updateProgressBar(segments, step);
     }
