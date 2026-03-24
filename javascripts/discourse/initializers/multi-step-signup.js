@@ -69,12 +69,14 @@ export default apiInitializer("0.8", (api) => {
     { key: "which state(s)", text: "Select State(s)" },
   ];
 
-  const placeholderMap = new Map(
-    placeholderConfig.map(({ key, text }) => [
-      normalizePlaceholderKey(key),
-      text,
-    ])
+  const placeholderEntries = placeholderConfig.map(({ key, text }) => [
+    normalizePlaceholderKey(key),
+    text,
+  ]);
+  const placeholderEntriesByLength = [...placeholderEntries].sort(
+    (a, b) => b[0].length - a[0].length
   );
+  const placeholderMap = new Map(placeholderEntries);
 
   function getPlaceholderText(labelText) {
     const normalized = normalizePlaceholderKey(labelText);
@@ -82,11 +84,40 @@ export default apiInitializer("0.8", (api) => {
 
     if (placeholderMap.has(normalized)) return placeholderMap.get(normalized);
 
-    for (const [key, text] of placeholderMap.entries()) {
+    for (const [key, text] of placeholderEntriesByLength) {
       if (normalized.includes(key)) return text;
     }
 
     return "";
+  }
+
+  function setSelectKitPlaceholder(selectKit, text) {
+    const header = selectKit.querySelector(".select-kit-header");
+    if (!header) return;
+
+    const selectedChoices = selectKit.querySelectorAll(".selected-choice");
+    const value = header.getAttribute("data-value");
+    const hasSelection =
+      (value && value.trim() !== "") || selectedChoices.length > 0;
+
+    if (hasSelection) return;
+
+    selectKit.setAttribute("data-placeholder", text);
+    header.setAttribute("data-placeholder", text);
+
+    const selectedName = header.querySelector(".selected-name");
+    const currentText = selectedName
+      ? selectedName.textContent
+      : header.textContent;
+
+    if (
+      !currentText ||
+      !currentText.trim() ||
+      /select an option|please select/i.test(currentText)
+    ) {
+      if (selectedName) selectedName.textContent = text;
+      else header.textContent = text;
+    }
   }
 
   function applyPlaceholders() {
@@ -123,8 +154,7 @@ export default apiInitializer("0.8", (api) => {
 
       const selectKit = wrap.querySelector(".select-kit");
       if (selectKit) {
-        const header = selectKit.querySelector(".select-kit-header");
-        if (header) header.setAttribute("data-placeholder", text);
+        setSelectKitPlaceholder(selectKit, text);
       }
     });
   }
