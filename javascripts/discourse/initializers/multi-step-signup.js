@@ -48,13 +48,27 @@ export default apiInitializer("0.8", (api) => {
       .forEach((el) => safeShow(el));
   }
 
-  // ✅ clear error
   function clearFieldError(wrap) {
     const error = wrap.querySelector(".field-error");
     if (error) error.remove();
   }
 
-  // ✅ validation (fixed)
+  function showFieldError(wrap, message) {
+    clearFieldError(wrap);
+
+    const error = document.createElement("div");
+    error.className = "field-error";
+    error.innerText = message;
+
+    const controls = wrap.querySelector(".controls");
+
+    if (controls) {
+      controls.appendChild(error);
+    } else {
+      wrap.appendChild(error);
+    }
+  }
+
   function getStepMissingFields(stepContainers) {
     const missing = [];
 
@@ -67,7 +81,6 @@ export default apiInitializer("0.8", (api) => {
 
       let hasValue = false;
 
-      // inputs
       const inputs = wrap.querySelectorAll("input, textarea");
       inputs.forEach((input) => {
         if (input.type === "checkbox") {
@@ -77,7 +90,6 @@ export default apiInitializer("0.8", (api) => {
         }
       });
 
-      // dropdowns
       const selectKit = wrap.querySelector(".select-kit");
       if (selectKit) {
         const header = selectKit.querySelector(".select-kit-header");
@@ -105,7 +117,6 @@ export default apiInitializer("0.8", (api) => {
     return missing;
   }
 
-  // ✅ inline error UI
   function highlightMissing(wrappers) {
     wrappers.forEach((wrap) => {
       const existing = wrap.querySelector(".field-error");
@@ -129,7 +140,6 @@ export default apiInitializer("0.8", (api) => {
     }
   }
 
-  // ✅ policy boxes
   function injectPolicyBoxes() {
     injectSinglePolicy(
       ".user-field-community-guidelines",
@@ -196,52 +206,6 @@ export default apiInitializer("0.8", (api) => {
 
     const coreFields = [emailField, usernameField, passwordField, confirmField];
 
-    function findField(keyword) {
-      return groups.find((g) =>
-        g.innerText.toLowerCase().includes(keyword)
-      );
-    }
-
-    const step2 = [
-      findField("first"),
-      findField("last"),
-      findField("pronoun"),
-      findField("phone"),
-      findField("state"),
-      findField("city"),
-      findField("zip"),
-    ].filter(Boolean);
-
-    const step3 = [
-      findField("role"),
-      findField("organization"),
-      findField("type"),
-      findField("groups"),
-      findField("which state"),
-    ].filter(Boolean);
-
-    const step4 = [
-      groups.find((g) =>
-        g.querySelector("[class*='community-guidelines']")
-      ),
-      groups.find((g) =>
-        g.querySelector("[class*='privacy-policy']")
-      ),
-    ].filter(Boolean);
-
-    const nav = document.createElement("div");
-    nav.className = "multi-step-nav";
-    nav.style.textAlign = "center";
-
-    const nextBtn = document.createElement("button");
-    nextBtn.className = "btn btn-primary";
-    nextBtn.innerText = "Continue";
-
-    nav.appendChild(nextBtn);
-
-    const container = document.querySelector(".user-fields");
-    if (container) container.after(nav);
-
     function showStep(step) {
       currentStep = step;
 
@@ -259,36 +223,24 @@ export default apiInitializer("0.8", (api) => {
       coreFields.forEach((el) =>
         step === 1 ? safeShow(el) : safeHide(el)
       );
-
-      step2.forEach((el) =>
-        step === 2 ? safeShow(el) : safeHide(el)
-      );
-
-      step3.forEach((el) =>
-        step === 3 ? safeShow(el) : safeHide(el)
-      );
-
-      step4.forEach((el) =>
-        step === 4 ? safeShow(el) : safeHide(el)
-      );
-
-      const cta = document.querySelector(".signup-page-cta");
-      if (cta) {
-        if (step === 4) safeShow(cta);
-        else safeHide(cta);
-      }
-
-      nextBtn.style.display = step === 4 ? "none" : "inline-flex";
-
-      updateCTAButtonText(step);
     }
 
-    // ✅ FIXED STEP 1 VALIDATION
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "btn btn-primary";
+    nextBtn.innerText = "Continue";
+
+    document.querySelector(".user-fields")?.after(nextBtn);
+
+    // ✅ FIXED STEP 1 VALIDATION (WITH PASSWORD MATCH)
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
       if (currentStep === 1) {
         const missing = [];
+
+        let passwordValue = "";
+        let confirmValue = "";
+        let confirmWrap = null;
 
         coreFields.forEach((wrap) => {
           const input = wrap.querySelector("input");
@@ -298,6 +250,18 @@ export default apiInitializer("0.8", (api) => {
           } else {
             clearFieldError(wrap);
           }
+
+          if (
+            wrap.classList.contains("create-account__password") &&
+            !wrap.classList.contains("mss-password-confirm")
+          ) {
+            passwordValue = input.value;
+          }
+
+          if (wrap.classList.contains("mss-password-confirm")) {
+            confirmValue = input.value;
+            confirmWrap = wrap;
+          }
         });
 
         if (missing.length) {
@@ -305,50 +269,14 @@ export default apiInitializer("0.8", (api) => {
           return;
         }
 
+        // 🔥 password mismatch check
+        if (passwordValue !== confirmValue) {
+          showFieldError(confirmWrap, "* Passwords do not match");
+          return;
+        }
+
         showStep(2);
         return;
-      }
-
-      const map = { 2: step2, 3: step3, 4: step4 };
-      const missing = getStepMissingFields(map[currentStep]);
-
-      if (missing.length) {
-        highlightMissing(missing);
-        return;
-      }
-
-      showStep(currentStep + 1);
-    });
-
-    // ✅ REALTIME ERROR REMOVAL
-    document.addEventListener("input", (e) => {
-      const wrap = e.target.closest(".input-group, .user-field");
-      if (!wrap) return;
-
-      if (e.target.value && e.target.value.trim() !== "") {
-        clearFieldError(wrap);
-      }
-    });
-
-    document.addEventListener("change", (e) => {
-      const wrap = e.target.closest(".input-group, .user-field");
-      if (!wrap) return;
-
-      // checkbox
-      if (e.target.type === "checkbox" && e.target.checked) {
-        clearFieldError(wrap);
-      }
-
-      // dropdown
-      const selectKit = wrap.querySelector(".select-kit");
-      if (selectKit) {
-        const header = selectKit.querySelector(".select-kit-header");
-        const value = header?.getAttribute("data-value");
-        const selectedChoices = selectKit.querySelectorAll(".selected-choice");
-
-        if ((value && value.trim() !== "") || selectedChoices.length > 0) {
-          clearFieldError(wrap);
-        }
       }
     });
 
