@@ -48,6 +48,7 @@ export default apiInitializer("0.8", (api) => {
       .forEach((el) => safeShow(el));
   }
 
+  // ✅ FIXED VALIDATION (dropdown support added)
   function getStepMissingFields(stepContainers) {
     const missing = [];
 
@@ -60,8 +61,8 @@ export default apiInitializer("0.8", (api) => {
 
       let hasValue = false;
 
+      // inputs
       const inputs = wrap.querySelectorAll("input, textarea");
-
       inputs.forEach((input) => {
         if (input.type === "checkbox") {
           if (input.checked) hasValue = true;
@@ -70,13 +71,25 @@ export default apiInitializer("0.8", (api) => {
         }
       });
 
+      // ✅ dropdowns (select-kit)
       const selectKit = wrap.querySelector(".select-kit");
-      if (selectKit) {
-        const selected =
-          selectKit.querySelector(".selected-name") ||
-          selectKit.querySelector(".selected-choice");
 
-        if (selected) hasValue = true;
+      if (selectKit) {
+        const header = selectKit.querySelector(".select-kit-header");
+
+        if (header) {
+          const value = header.getAttribute("data-value");
+
+          if (value && value.trim() !== "") {
+            hasValue = true;
+          }
+        }
+
+        // multi-select support
+        const selectedChoices = selectKit.querySelectorAll(".selected-choice");
+        if (selectedChoices.length > 0) {
+          hasValue = true;
+        }
       }
 
       if (!hasValue) missing.push(wrap);
@@ -85,9 +98,22 @@ export default apiInitializer("0.8", (api) => {
     return missing;
   }
 
+  // ✅ FIXED highlighting (dropdowns included)
   function highlightMissing(wrappers) {
     wrappers.forEach((wrap) => {
       wrap.style.border = "1px solid red";
+
+      // input highlight
+      const input = wrap.querySelector("input, textarea");
+      if (input) {
+        input.style.border = "1px solid red";
+      }
+
+      // dropdown highlight
+      const selectHeader = wrap.querySelector(".select-kit-header");
+      if (selectHeader) {
+        selectHeader.style.border = "1px solid red";
+      }
     });
 
     if (wrappers.length) {
@@ -95,7 +121,7 @@ export default apiInitializer("0.8", (api) => {
     }
   }
 
-  // ✅ MULTIPLE POLICY BOXES
+  // ✅ POLICY BOXES
   function injectPolicyBoxes() {
     injectSinglePolicy(
       ".user-field-community-guidelines",
@@ -217,8 +243,6 @@ export default apiInitializer("0.8", (api) => {
 
       if (step === 4) {
         setHeading("Participation Agreement");
-
-        // 🔥 inject BOTH boxes
         setTimeout(injectPolicyBoxes, 100);
       }
 
