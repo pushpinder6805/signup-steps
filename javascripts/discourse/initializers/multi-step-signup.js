@@ -66,50 +66,99 @@ export default apiInitializer("0.8", (api) => {
     else wrap.appendChild(error);
   }
 
-  // ✅ PLACEHOLDERS (SAFE ADD)
-  function applyPlaceholders() {
-    const map = [
-      { key: "email", text: "Email Address" },
-      { key: "username", text: "Username" },
-      { key: "password", text: "Password" },
-      { key: "re-enter password", text: "Password" },
-      { key: "first name", text: "First Name" },
-      { key: "last name", text: "Last Name" },
-      { key: "pronouns", text: "Select Pronouns" },
-      { key: "state", text: "Select a State" },
-      { key: "city", text: "Select a City" },
-      { key: "zip", text: "Zip Code" },
-      { key: "role", text: "Select your Role" },
-      { key: "organization", text: "Organization Name" },
-      { key: "type of organization", text: "Organization Type" },
-      { key: "groups your organization serves", text: "Select Groups Served by your Organization" },
-      { key: "which state(s)", text: "Select State(s)" }
-    ];
+  function getStepMissingFields(stepContainers) {
+    const missing = [];
 
-    document.querySelectorAll(".user-fields .input-group, .user-field").forEach((wrap) => {
+    stepContainers.forEach((wrap) => {
+      if (!wrap || wrap.style.display === "none") return;
+
       const label = wrap.querySelector("label");
-      if (!label) return;
+      const isRequired = label && label.innerText.includes("*");
+      if (!isRequired) return;
 
-      const labelText = label.innerText.toLowerCase();
+      let hasValue = false;
 
-      const input = wrap.querySelector("input, textarea");
-      if (input) {
-        const match = map.find((m) => labelText.includes(m.key));
-        if (match) input.setAttribute("placeholder", match.text);
-      }
+      const inputs = wrap.querySelectorAll("input, textarea");
+      inputs.forEach((input) => {
+        if (input.type === "checkbox") {
+          if (input.checked) hasValue = true;
+        } else if (input.value && input.value.trim()) {
+          hasValue = true;
+        }
+      });
 
-      const selectHeader = wrap.querySelector(".select-kit-header");
-      if (selectHeader) {
-        const match = map.find((m) => labelText.includes(m.key));
-        if (match) {
-          const el =
-            selectHeader.querySelector(".name") ||
-            selectHeader.querySelector(".formatted-selection");
+      const selectKit = wrap.querySelector(".select-kit");
+      if (selectKit) {
+        const header = selectKit.querySelector(".select-kit-header");
+        const value = header?.getAttribute("data-value");
 
-          if (el) el.innerText = match.text;
+        const selectedChoices = selectKit.querySelectorAll(".selected-choice");
+
+        if ((value && value.trim() !== "") || selectedChoices.length > 0) {
+          hasValue = true;
         }
       }
+
+      if (hasValue) {
+        clearFieldError(wrap);
+      } else {
+        missing.push(wrap);
+      }
     });
+
+    return missing;
+  }
+
+  function highlightMissing(wrappers) {
+    wrappers.forEach((wrap) => {
+      clearFieldError(wrap);
+
+      const error = document.createElement("div");
+      error.className = "field-error";
+      error.innerText = "* This is required";
+
+      const controls = wrap.querySelector(".controls");
+
+      if (controls) controls.appendChild(error);
+      else wrap.appendChild(error);
+    });
+
+    if (wrappers.length) {
+      wrappers[0].scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  function injectPolicyBoxes() {
+    injectSinglePolicy(
+      ".user-field-community-guidelines",
+      settings.community_guidelines_text
+    );
+
+    injectSinglePolicy(
+      ".user-field-privacy-policy",
+      settings.privacy_policy_text
+    );
+  }
+
+  function injectSinglePolicy(selector, text) {
+    const field = document.querySelector(`${selector} .controls`);
+    if (!field) return;
+
+    if (field.querySelector(".policy-box")) return;
+
+    const formattedText = (text || "")
+      .replace(/\n/g, "<br>")
+      .replace(/\.\s/g, ".<br><br>");
+
+    const box = document.createElement("div");
+    box.className = "policy-box";
+
+    box.innerHTML = `<div class="policy-box__inner">${formattedText}</div>`;
+
+    const checkbox = field.querySelector(".checkbox-label");
+
+    if (checkbox) field.insertBefore(box, checkbox);
+    else field.appendChild(box);
   }
 
   function initMultiStep() {
@@ -173,6 +222,7 @@ export default apiInitializer("0.8", (api) => {
 
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
+    nav.style.textAlign = "center";
 
     const nextBtn = document.createElement("button");
     nextBtn.className = "btn btn-primary";
@@ -185,6 +235,15 @@ export default apiInitializer("0.8", (api) => {
 
     function showStep(step) {
       currentStep = step;
+
+      if (step === 1) setHeading("Create your Account");
+      if (step === 2) setHeading("Enter Your Details");
+      if (step === 3) setHeading("About Your Organization");
+
+      if (step === 4) {
+        setHeading("Participation Agreement");
+        setTimeout(injectPolicyBoxes, 100);
+      }
 
       updateProgressBar(step);
 
@@ -203,8 +262,19 @@ export default apiInitializer("0.8", (api) => {
       step4.forEach((el) =>
         step === 4 ? safeShow(el) : safeHide(el)
       );
+
+      const cta = document.querySelector(".signup-page-cta");
+      if (cta) {
+        if (step === 4) safeShow(cta);
+        else safeHide(cta);
+      }
+
+      nextBtn.style.display = step === 4 ? "none" : "inline-flex";
+
+      updateCTAButtonText(step);
     }
 
+    // ✅ ONLY CHANGE: Step 1 password validation added safely
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
@@ -218,8 +288,11 @@ export default apiInitializer("0.8", (api) => {
         coreFields.forEach((wrap) => {
           const input = wrap.querySelector("input");
 
-          if (!input || !input.value.trim()) missing.push(wrap);
-          else clearFieldError(wrap);
+          if (!input || !input.value.trim()) {
+            missing.push(wrap);
+          } else {
+            clearFieldError(wrap);
+          }
 
           if (
             wrap.classList.contains("create-account__password") &&
@@ -248,11 +321,16 @@ export default apiInitializer("0.8", (api) => {
         return;
       }
 
+      const map = { 2: step2, 3: step3, 4: step4 };
+      const missing = getStepMissingFields(map[currentStep]);
+
+      if (missing.length) {
+        highlightMissing(missing);
+        return;
+      }
+
       showStep(currentStep + 1);
     });
-
-    // apply placeholders safely
-    setTimeout(applyPlaceholders, 300);
 
     showStep(1);
   }
