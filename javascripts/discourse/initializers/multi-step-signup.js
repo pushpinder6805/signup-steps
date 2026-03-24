@@ -48,7 +48,13 @@ export default apiInitializer("0.8", (api) => {
       .forEach((el) => safeShow(el));
   }
 
-  // ✅ FIXED VALIDATION (dropdown support added)
+  // ✅ clear error
+  function clearFieldError(wrap) {
+    const error = wrap.querySelector(".field-error");
+    if (error) error.remove();
+  }
+
+  // ✅ validation (fixed for dropdowns)
   function getStepMissingFields(stepContainers) {
     const missing = [];
 
@@ -71,48 +77,49 @@ export default apiInitializer("0.8", (api) => {
         }
       });
 
-      // ✅ dropdowns (select-kit)
+      // dropdowns
       const selectKit = wrap.querySelector(".select-kit");
-
       if (selectKit) {
         const header = selectKit.querySelector(".select-kit-header");
 
         if (header) {
           const value = header.getAttribute("data-value");
-
           if (value && value.trim() !== "") {
             hasValue = true;
           }
         }
 
-        // multi-select support
         const selectedChoices = selectKit.querySelectorAll(".selected-choice");
         if (selectedChoices.length > 0) {
           hasValue = true;
         }
       }
 
-      if (!hasValue) missing.push(wrap);
+      if (hasValue) {
+        clearFieldError(wrap);
+      } else {
+        missing.push(wrap);
+      }
     });
 
     return missing;
   }
 
-  // ✅ FIXED highlighting (dropdowns included)
+  // ✅ inline error UI (no red borders)
   function highlightMissing(wrappers) {
     wrappers.forEach((wrap) => {
-      wrap.style.border = "1px solid red";
+      const existing = wrap.querySelector(".field-error");
+      if (existing) existing.remove();
 
-      // input highlight
-      const input = wrap.querySelector("input, textarea");
-      if (input) {
-        input.style.border = "1px solid red";
-      }
+      const error = document.createElement("div");
+      error.className = "field-error";
+      error.innerText = "* This is required";
 
-      // dropdown highlight
-      const selectHeader = wrap.querySelector(".select-kit-header");
-      if (selectHeader) {
-        selectHeader.style.border = "1px solid red";
+      const controls = wrap.querySelector(".controls");
+      if (controls) {
+        controls.appendChild(error);
+      } else {
+        wrap.appendChild(error);
       }
     });
 
@@ -121,7 +128,7 @@ export default apiInitializer("0.8", (api) => {
     }
   }
 
-  // ✅ POLICY BOXES
+  // ✅ policy boxes
   function injectPolicyBoxes() {
     injectSinglePolicy(
       ".user-field-community-guidelines",
