@@ -1,35 +1,7 @@
 community_guidelines_text:
-  default: |
-    Welcome to our community.
-
-    By joining, you agree to treat all members with respect and kindness.
-
-    Harassment, hate speech, and spam are not tolerated.
-
-    Posts must be relevant to the topic at hand.
-
-    Keep discussions constructive and on-topic.
-
-    Share knowledge freely and give credit where it is due.
-
-    Respect the privacy of others and do not share personal information without consent.
-
-    Follow all moderator instructions.
-
-    Violations may result in warnings, suspensions, or permanent bans.
-
-    These guidelines exist to keep this a safe and welcoming space for everyone.
-  type: text
+  default: "Welcome to our community.\n\nBy joining, you agree to treat all members with respect and kindness.\n\nHarassment, hate speech, and spam are not tolerated.\n\nPosts must be relevant to the topic at hand.\n\nKeep discussions constructive and on-topic.\n\nShare knowledge freely and give credit where it is due.\n\nRespect the privacy of others and do not share personal information without consent.\n\nFollow all moderator instructions.\n\nViolations may result in warnings, suspensions, or permanent bans.\n\nThese guidelines exist to keep this a safe and welcoming space for everyone."
+  type: string
 
 privacy_policy_text:
-  default: |
-    By creating an account and using our platform, you agree to the collection and use of your information.
-
-    We collect data such as name, email, and organization details.
-
-    This is used to manage your account and improve services.
-
-    We do not sell your data to third parties.
-
-    You can request access or deletion of your data anytime.
-  type: text
+  default: "By creating an account and using our platform, you agree to the collection and use of your information.\n\nWe collect data such as name, email, and organization details.\n\nThis is used to manage your account and improve services.\n\nWe do not sell your data to third parties.\n\nYou can request access or deletion of your data anytime."
+  type: string
