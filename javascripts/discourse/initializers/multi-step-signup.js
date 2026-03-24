@@ -2,21 +2,16 @@ import { apiInitializer } from "discourse/lib/api";
 
 export default apiInitializer("0.8", (api) => {
   let initialized = false;
-  let observer = null;
   let currentStep = 1;
 
   function safeHide(el) {
     if (!el) return;
-    el.style.visibility = "hidden";
-    el.style.position = "absolute";
-    el.style.pointerEvents = "none";
+    el.style.display = "none";
   }
 
   function safeShow(el) {
     if (!el) return;
-    el.style.visibility = "";
-    el.style.position = "";
-    el.style.pointerEvents = "";
+    el.style.display = "";
   }
 
   function setHeading(text) {
@@ -24,14 +19,11 @@ export default apiInitializer("0.8", (api) => {
     if (heading) heading.innerText = text;
   }
 
-  function hideButtons() {
-    const cta = document.querySelector(".signup-page-cta");
-    if (cta) cta.style.display = "none";
-  }
+  function updateCTAButtonText(step) {
+    const label = document.querySelector(".signup-page-cta__signup .d-button-label");
+    if (!label) return;
 
-  function showButtons() {
-    const cta = document.querySelector(".signup-page-cta");
-    if (cta) cta.style.display = "";
+    label.textContent = step === 4 ? "Complete Sign Up" : "Sign Up";
   }
 
   function cleanup() {
@@ -42,19 +34,13 @@ export default apiInitializer("0.8", (api) => {
     document
       .querySelectorAll(".user-fields .input-group, .create-account-email, .create-account__username, .create-account__password")
       .forEach((el) => safeShow(el));
-
-    if (observer) {
-      observer.disconnect();
-      observer = null;
-    }
   }
 
-  // -------- VALIDATION --------
   function getStepMissingFields(stepContainers) {
     const missing = [];
 
     stepContainers.forEach((wrap) => {
-      if (!wrap || wrap.style.visibility === "hidden") return;
+      if (!wrap || wrap.style.display === "none") return;
 
       const label = wrap.querySelector("label");
       const isRequired = label && label.innerText.includes("*");
@@ -73,7 +59,6 @@ export default apiInitializer("0.8", (api) => {
       });
 
       const selectKit = wrap.querySelector(".select-kit");
-
       if (selectKit) {
         const selected =
           selectKit.querySelector(".selected-name") ||
@@ -91,26 +76,10 @@ export default apiInitializer("0.8", (api) => {
   function highlightMissing(wrappers) {
     wrappers.forEach((wrap) => {
       wrap.style.border = "1px solid red";
-
-      const input = wrap.querySelector("input, textarea");
-
-      const clear = () => {
-        wrap.style.border = "";
-        input && input.removeEventListener("input", clear);
-        input && input.removeEventListener("change", clear);
-      };
-
-      if (input) {
-        input.addEventListener("input", clear);
-        input.addEventListener("change", clear);
-      }
     });
 
     if (wrappers.length) {
-      wrappers[0].scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+      wrappers[0].scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }
 
@@ -124,7 +93,6 @@ export default apiInitializer("0.8", (api) => {
 
     initialized = true;
 
-    // -------- CORE --------
     const emailField = document.querySelector(".create-account-email");
     const usernameField = document.querySelector(".create-account__username");
     const passwordField = document.querySelector(".create-account__password");
@@ -133,24 +101,16 @@ export default apiInitializer("0.8", (api) => {
 
     if (!confirmField && passwordField) {
       confirmField = document.createElement("div");
-      confirmField.className =
-        "create-account__password mss-password-confirm";
+      confirmField.className = "create-account__password mss-password-confirm";
 
       confirmField.innerHTML =
-        "<label>Re-enter Password*</label>" +
-        "<input type='password' required />";
+        "<label>Re-enter Password*</label><input type='password' required />";
 
       passwordField.after(confirmField);
     }
 
-    const coreFields = [
-      emailField,
-      usernameField,
-      passwordField,
-      confirmField,
-    ];
+    const coreFields = [emailField, usernameField, passwordField, confirmField];
 
-    // -------- FIELD DETECTION --------
     function findField(keyword) {
       return groups.find((g) =>
         g.innerText.toLowerCase().includes(keyword)
@@ -184,14 +144,9 @@ export default apiInitializer("0.8", (api) => {
       ),
     ].filter(Boolean);
 
-    const totalSteps = 4;
-
-    // -------- NAV --------
     const nav = document.createElement("div");
     nav.className = "multi-step-nav";
-    nav.style.display = "flex";
-    nav.style.justifyContent = "center";
-    nav.style.marginTop = "20px";
+    nav.style.textAlign = "center";
 
     const nextBtn = document.createElement("button");
     nextBtn.className = "btn btn-primary";
@@ -202,24 +157,6 @@ export default apiInitializer("0.8", (api) => {
     const container = document.querySelector(".user-fields");
     if (container) container.after(nav);
 
-    // -------- OBSERVER --------
-    observer = new MutationObserver(() => {
-      const cta = document.querySelector(".signup-page-cta");
-      if (!cta) return;
-
-      if (currentStep === 4) {
-        cta.style.display = "";
-      } else {
-        cta.style.display = "none";
-      }
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    // -------- STEP CONTROL --------
     function showStep(step) {
       currentStep = step;
 
@@ -244,38 +181,20 @@ export default apiInitializer("0.8", (api) => {
         step === 4 ? safeShow(el) : safeHide(el)
       );
 
-      if (step === 4) showButtons();
-      else hideButtons();
+      const cta = document.querySelector(".signup-page-cta");
+      if (cta) safeShow(step === 4 ? cta : null), safeHide(step !== 4 ? cta : null);
 
       nextBtn.style.display = step === 4 ? "none" : "inline-flex";
+
+      updateCTAButtonText(step);
     }
 
-    // -------- EVENTS --------
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
       if (currentStep === 1) {
-        const emailInput = emailField.querySelector("input");
-        const usernameInput = usernameField.querySelector("input");
-        const passwordInput = passwordField.querySelector("input");
-        const confirmInput = confirmField.querySelector("input");
-
-        const missing = [];
-
-        if (!emailInput.value.trim()) missing.push(emailInput);
-        if (!usernameInput.value.trim()) missing.push(usernameInput);
-        if (!passwordInput.value.trim()) missing.push(passwordInput);
-        if (!confirmInput.value.trim()) missing.push(confirmInput);
-
-        if (
-          passwordInput.value &&
-          confirmInput.value &&
-          passwordInput.value !== confirmInput.value
-        ) {
-          alert("Passwords do not match");
-          confirmInput.focus();
-          return;
-        }
+        const inputs = coreFields.map(f => f.querySelector("input"));
+        const missing = inputs.filter(i => !i.value.trim());
 
         if (missing.length) {
           highlightMissing(missing.map(i => i.closest(".input-group")));
@@ -286,21 +205,15 @@ export default apiInitializer("0.8", (api) => {
         return;
       }
 
-      let fields = [];
-      if (currentStep === 2) fields = step2;
-      if (currentStep === 3) fields = step3;
-      if (currentStep === 4) fields = step4;
-
-      const missing = getStepMissingFields(fields);
+      const map = { 2: step2, 3: step3, 4: step4 };
+      const missing = getStepMissingFields(map[currentStep]);
 
       if (missing.length) {
         highlightMissing(missing);
         return;
       }
 
-      if (currentStep < totalSteps) {
-        showStep(currentStep + 1);
-      }
+      showStep(currentStep + 1);
     });
 
     showStep(1);
