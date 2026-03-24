@@ -69,14 +69,12 @@ export default apiInitializer("0.8", (api) => {
     { key: "which state(s)", text: "Select State(s)" },
   ];
 
-  const placeholderEntries = placeholderConfig.map(({ key, text }) => [
-    normalizePlaceholderKey(key),
-    text,
-  ]);
-  const placeholderEntriesByLength = [...placeholderEntries].sort(
-    (a, b) => b[0].length - a[0].length
+  const placeholderMap = new Map(
+    placeholderConfig.map(({ key, text }) => [
+      normalizePlaceholderKey(key),
+      text,
+    ])
   );
-  const placeholderMap = new Map(placeholderEntries);
 
   function getPlaceholderText(labelText) {
     const normalized = normalizePlaceholderKey(labelText);
@@ -84,51 +82,11 @@ export default apiInitializer("0.8", (api) => {
 
     if (placeholderMap.has(normalized)) return placeholderMap.get(normalized);
 
-    for (const [key, text] of placeholderEntriesByLength) {
+    for (const [key, text] of placeholderMap.entries()) {
       if (normalized.includes(key)) return text;
     }
 
     return "";
-  }
-
-  function setSelectKitPlaceholder(selectKit, text) {
-    const header = selectKit.querySelector(".select-kit-header");
-    if (!header) return;
-
-    const sync = () => {
-      const selectedChoices = Array.from(
-        selectKit.querySelectorAll(".selected-choice")
-      );
-      const value = header.getAttribute("data-value");
-      const hasSelection =
-        (value && value.trim() !== "") || selectedChoices.length > 0;
-
-      selectKit.setAttribute("data-placeholder", text);
-      header.setAttribute("data-placeholder", text);
-
-      if (hasSelection) return;
-
-      const selectedName = header.querySelector(".selected-name");
-      if (!selectedName) return;
-
-      const currentText = (selectedName.textContent || "").trim();
-      if (!currentText || /select an option|please select/i.test(currentText)) {
-        selectedName.textContent = text;
-      }
-    };
-
-    sync();
-
-    if (!selectKit.getAttribute("data-placeholder-observer")) {
-      selectKit.setAttribute("data-placeholder-observer", "true");
-      const observer = new MutationObserver(() => sync());
-      observer.observe(selectKit, {
-        subtree: true,
-        childList: true,
-        attributes: true,
-        attributeFilter: ["data-value", "class", "aria-selected"],
-      });
-    }
   }
 
   function applyPlaceholders() {
@@ -165,7 +123,8 @@ export default apiInitializer("0.8", (api) => {
 
       const selectKit = wrap.querySelector(".select-kit");
       if (selectKit) {
-        setSelectKitPlaceholder(selectKit, text);
+        const header = selectKit.querySelector(".select-kit-header");
+        if (header) header.setAttribute("data-placeholder", text);
       }
     });
   }
