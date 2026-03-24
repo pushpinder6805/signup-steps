@@ -59,67 +59,62 @@ export default apiInitializer("0.8", (api) => {
     stepContainers.forEach((wrap) => {
       if (!wrap || wrap.style.visibility === "hidden") return;
 
-      // normal inputs
-      const inputs = wrap.querySelectorAll(
-        "input, select, textarea"
-      );
+      const label = wrap.querySelector("label");
+      const isRequired = label && label.innerText.includes("*");
+
+      if (!isRequired) return;
+
+      let hasValue = false;
+
+      // -------- inputs --------
+      const inputs = wrap.querySelectorAll("input, textarea");
 
       inputs.forEach((input) => {
-        const isRequired =
-          input.required ||
-          input.getAttribute("aria-required") === "true";
-
-        if (!isRequired) return;
-
         if (input.type === "checkbox") {
-          if (!input.checked) missing.push(input);
-        } else if (!input.value || !input.value.trim()) {
-          missing.push(input);
+          if (input.checked) hasValue = true;
+        } else if (input.value && input.value.trim()) {
+          hasValue = true;
         }
       });
 
-      // discourse select-kit
+      // -------- select-kit --------
       const selectKit = wrap.querySelector(".select-kit");
 
       if (selectKit) {
-        const isRequired =
-          selectKit.getAttribute("aria-required") === "true" ||
-          wrap.innerText.includes("*");
-
-        if (!isRequired) return;
-
-        const hasValue =
+        const selected =
           selectKit.querySelector(".selected-name") ||
           selectKit.querySelector(".selected-choice");
 
-        if (!hasValue) {
-          missing.push(selectKit);
-        }
+        if (selected) hasValue = true;
+      }
+
+      // -------- final --------
+      if (!hasValue) {
+        missing.push(wrap);
       }
     });
 
     return missing;
   }
 
-  function highlightMissing(inputs) {
-    inputs.forEach((input) => {
-      const container =
-        input.closest(".input-group") || input;
+  function highlightMissing(wrappers) {
+    wrappers.forEach((wrap) => {
+      wrap.style.border = "1px solid red";
 
-      container.style.border = "1px solid red";
+      const input = wrap.querySelector("input, textarea");
 
       const clear = () => {
-        container.style.border = "";
-        input.removeEventListener("input", clear);
-        input.removeEventListener("change", clear);
+        wrap.style.border = "";
+        input?.removeEventListener("input", clear);
+        input?.removeEventListener("change", clear);
       };
 
-      input.addEventListener("input", clear);
-      input.addEventListener("change", clear);
+      input?.addEventListener("input", clear);
+      input?.addEventListener("change", clear);
     });
 
-    if (inputs.length) {
-      inputs[0].scrollIntoView({
+    if (wrappers.length) {
+      wrappers[0].scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
@@ -273,26 +268,46 @@ export default apiInitializer("0.8", (api) => {
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
-      let fields = [];
+      // Step 1 (manual validation)
+      if (currentStep === 1) {
+        const emailInput = emailField.querySelector("input");
+        const usernameInput = usernameField.querySelector("input");
+        const passwordInput = passwordField.querySelector("input");
+        const confirmInput = confirmField.querySelector("input");
 
-      if (currentStep === 1) fields = coreFields;
+        const missing = [];
+
+        if (!emailInput.value.trim()) missing.push(emailInput);
+        if (!usernameInput.value.trim()) missing.push(usernameInput);
+        if (!passwordInput.value.trim()) missing.push(passwordInput);
+        if (!confirmInput.value.trim()) missing.push(confirmInput);
+
+        if (
+          passwordInput.value &&
+          confirmInput.value &&
+          passwordInput.value !== confirmInput.value
+        ) {
+          alert("Passwords do not match");
+          confirmInput.focus();
+          return;
+        }
+
+        if (missing.length) {
+          highlightMissing(missing.map(i => i.closest(".input-group")));
+          return;
+        }
+
+        showStep(2);
+        return;
+      }
+
+      // Step 2–4 (dynamic validation)
+      let fields = [];
       if (currentStep === 2) fields = step2;
       if (currentStep === 3) fields = step3;
       if (currentStep === 4) fields = step4;
 
       const missing = getStepMissingFields(fields);
-
-      // password match
-      if (currentStep === 1) {
-        const pass = passwordField.querySelector("input")?.value;
-        const confirm =
-          confirmField.querySelector("input")?.value;
-
-        if (pass !== confirm) {
-          alert("Passwords do not match");
-          return;
-        }
-      }
 
       if (missing.length) {
         highlightMissing(missing);
