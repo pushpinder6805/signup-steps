@@ -366,7 +366,7 @@ export default apiInitializer("0.8", (api) => {
     nav.className = "multi-step-nav";
     nav.style.textAlign = "center";
 
-    const backBtn = document.createElement("button"); // ✅ NEW
+    const backBtn = document.createElement("button");
     backBtn.className = "btn btn-default";
     backBtn.innerText = "Back";
     backBtn.style.marginRight = "10px";
@@ -375,7 +375,7 @@ export default apiInitializer("0.8", (api) => {
     nextBtn.className = "btn btn-primary";
     nextBtn.innerText = "Continue";
 
-    nav.appendChild(backBtn); // ✅ NEW
+    nav.appendChild(backBtn);
     nav.appendChild(nextBtn);
 
     const container = document.querySelector(".user-fields");
@@ -414,19 +414,35 @@ export default apiInitializer("0.8", (api) => {
       );
 
       const cta = document.querySelector(".signup-page-cta");
+
       if (cta) {
         if (step === 4) safeShow(cta);
         else safeHide(cta);
       }
 
       nextBtn.style.display = step === 4 ? "none" : "inline-flex";
+      backBtn.style.display = step === 1 ? "none" : "inline-flex";
 
-      backBtn.style.display = step === 1 ? "none" : "inline-flex"; // ✅ NEW
+      /* ✅ FIX: align Back + Complete Sign Up inline */
+      if (cta && step === 4) {
+        cta.style.display = "flex";
+        cta.style.alignItems = "center";
+        cta.style.justifyContent = "center";
+        cta.style.gap = "10px";
+
+        if (!cta.contains(backBtn)) {
+          cta.prepend(backBtn);
+        }
+      } else {
+        if (!nav.contains(backBtn)) {
+          nav.prepend(backBtn);
+        }
+      }
 
       updateCTAButtonText(step);
     }
 
-    backBtn.addEventListener("click", (e) => { // ✅ NEW
+    backBtn.addEventListener("click", (e) => {
       e.preventDefault();
       if (currentStep > 1) {
         showStep(currentStep - 1);
