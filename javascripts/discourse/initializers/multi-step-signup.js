@@ -18,19 +18,20 @@ export default apiInitializer("0.8", (api) => {
     const heading = document.querySelector("#create-account-title");
     if (heading) heading.innerText = text;
   }
+
   function setSubHeading(text) {
-  let sub = document.querySelector("#create-account-subheading");
+    let sub = document.querySelector("#create-account-subheading");
 
-  if (!sub) {
-    sub = document.createElement("div");
-    sub.id = "create-account-subheading";
+    if (!sub) {
+      sub = document.createElement("div");
+      sub.id = "create-account-subheading";
 
-    const heading = document.querySelector("#create-account-title");
-    if (heading) heading.after(sub);
+      const heading = document.querySelector("#create-account-title");
+      if (heading) heading.after(sub);
+    }
+
+    sub.innerText = text;
   }
-
-  sub.innerText = text;
-}
 
   function updateCTAButtonText(step) {
     const label = document.querySelector(".signup-page-cta__signup .d-button-label");
@@ -170,7 +171,6 @@ export default apiInitializer("0.8", (api) => {
     else wrap.appendChild(error);
   }
 
-  /* ✅ NEW: password toggle (no interference) */
   function attachPasswordToggle(scope = document) {
     scope.querySelectorAll(".toggle-password-mask").forEach((btn) => {
       if (btn.dataset.bound) return;
@@ -312,7 +312,6 @@ export default apiInitializer("0.8", (api) => {
       confirmField = document.createElement("div");
       confirmField.className = "create-account__password mss-password-confirm";
 
-      /* ✅ ONLY MODIFIED BLOCK check */
       confirmField.innerHTML =
         `<label>Re-enter Password*</label>
          <div class="password-wrapper confirm-password-wrapper">
@@ -367,10 +366,16 @@ export default apiInitializer("0.8", (api) => {
     nav.className = "multi-step-nav";
     nav.style.textAlign = "center";
 
+    const backBtn = document.createElement("button"); // ✅ NEW
+    backBtn.className = "btn btn-default";
+    backBtn.innerText = "Back";
+    backBtn.style.marginRight = "10px";
+
     const nextBtn = document.createElement("button");
     nextBtn.className = "btn btn-primary";
     nextBtn.innerText = "Continue";
 
+    nav.appendChild(backBtn); // ✅ NEW
     nav.appendChild(nextBtn);
 
     const container = document.querySelector(".user-fields");
@@ -387,8 +392,8 @@ export default apiInitializer("0.8", (api) => {
         setHeading("Participation Agreement");
         setTimeout(injectPolicyBoxes, 100);
       }
-      /* ✅ NEW LINE (same for all steps) */
-  setSubHeading("Fields marked with * are required.");
+
+      setSubHeading("Fields marked with * are required.");
 
       updateProgressBar(step);
 
@@ -416,8 +421,17 @@ export default apiInitializer("0.8", (api) => {
 
       nextBtn.style.display = step === 4 ? "none" : "inline-flex";
 
+      backBtn.style.display = step === 1 ? "none" : "inline-flex"; // ✅ NEW
+
       updateCTAButtonText(step);
     }
+
+    backBtn.addEventListener("click", (e) => { // ✅ NEW
+      e.preventDefault();
+      if (currentStep > 1) {
+        showStep(currentStep - 1);
+      }
+    });
 
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -477,10 +491,7 @@ export default apiInitializer("0.8", (api) => {
     });
 
     applyPlaceholders();
-
-    /* ✅ ONLY ADDITION */
     attachPasswordToggle();
-
     showStep(1);
   }
 
