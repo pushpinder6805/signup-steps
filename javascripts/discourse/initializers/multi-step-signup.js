@@ -347,7 +347,7 @@ export default apiInitializer("0.8", (api) => {
 
     const step3 = [
       findField("role"),
-      findField("organization"),
+      findField("organization name"),
       findField("type"),
       findField("groups"),
       findField("which state"),
